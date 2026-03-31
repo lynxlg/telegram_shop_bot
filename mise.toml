@@ -1,0 +1,8 @@
+[tools]
+direnv = "latest"
+"github:cli/cli" = "latest"
+gitleaks = "latest"
+jq = "latest"
+node = "latest"
+"ubi:dapi/port-selector" = "latest"
+ruby = "3.4.8"
