@@ -33,3 +33,8 @@ class Product(Base):
         back_populates="product",
         cascade="all, delete-orphan",
     )
+    cart_items: Mapped[List["CartItem"]] = relationship(
+        "CartItem",
+        back_populates="product",
+        cascade="all, delete-orphan",
+    )

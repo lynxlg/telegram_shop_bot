@@ -13,4 +13,4 @@ class CatalogCallback(CallbackData, prefix="catalog"):
 OPEN_CATEGORY_ACTION = "open_category"
 OPEN_PRODUCT_ACTION = "open_product"
 GO_BACK_ACTION = "go_back"
-
+ADD_TO_CART_ACTION = "add_to_cart"

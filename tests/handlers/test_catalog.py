@@ -1,23 +1,28 @@
 from decimal import Decimal
+from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
 from aiogram.methods import SendMessage
 from aiogram.types import InputMediaPhoto
 from aiogram.exceptions import TelegramBadRequest
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.callbacks.catalog import (
+    ADD_TO_CART_ACTION,
     CatalogCallback,
     GO_BACK_ACTION,
     OPEN_CATEGORY_ACTION,
     OPEN_PRODUCT_ACTION,
 )
 from app.handlers import catalog as catalog_module
-from app.handlers.catalog import go_back, open_catalog, open_category, open_product
+from app.handlers.catalog import add_to_cart, go_back, open_catalog, open_category, open_product
+from app.models.cart_item import CartItem
 from app.models.category import Category
 from app.models.product import Product
 from app.models.product_attribute import ProductAttribute
+from app.models.user import User
 
 
 @pytest.mark.asyncio
@@ -327,3 +332,86 @@ async def test_open_product_handles_image_render_error(db_session, callback_fact
     assert "Белая футболка" in text
     assert "Цена: 1999.00 ₽" in text
     callback.answer.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_add_to_cart_creates_cart_item(db_session, callback_factory) -> None:
+    user = User(
+        telegram_id=123456789,
+        username="cart_user",
+        first_name="Cart",
+        last_name="User",
+    )
+    category = Category(name="Футболки")
+    db_session.add_all([user, category])
+    await db_session.flush()
+    product = Product(
+        category_id=category.id,
+        name="Белая футболка",
+        price=Decimal("1999.00"),
+    )
+    db_session.add(product)
+    await db_session.commit()
+    callback = callback_factory()
+    callback.from_user = SimpleNamespace(id=user.telegram_id)
+    callback_data = CatalogCallback(action=ADD_TO_CART_ACTION, product_id=product.id)
+
+    await add_to_cart(callback, callback_data, db_session)
+
+    result = await db_session.execute(
+        select(CartItem).where(CartItem.product_id == product.id)
+    )
+    cart_item = result.scalar_one()
+    assert cart_item.quantity == 1
+    callback.answer.assert_awaited_once_with("Товар добавлен в корзину.")
+
+
+@pytest.mark.asyncio
+async def test_add_to_cart_creates_user_when_missing(db_session, callback_factory) -> None:
+    category = Category(name="Футболки")
+    db_session.add(category)
+    await db_session.flush()
+    product = Product(
+        category_id=category.id,
+        name="Белая футболка",
+        price=Decimal("1999.00"),
+    )
+    db_session.add(product)
+    await db_session.commit()
+    callback = callback_factory()
+    callback.from_user = SimpleNamespace(
+        id=555666777,
+        username="new_cart_user",
+        first_name="New",
+        last_name="User",
+    )
+    callback_data = CatalogCallback(action=ADD_TO_CART_ACTION, product_id=product.id)
+
+    await add_to_cart(callback, callback_data, db_session)
+
+    user_result = await db_session.execute(
+        select(User).where(User.telegram_id == callback.from_user.id)
+    )
+    cart_item_result = await db_session.execute(
+        select(CartItem).where(CartItem.product_id == product.id)
+    )
+
+    assert user_result.scalar_one().username == "new_cart_user"
+    assert cart_item_result.scalar_one().quantity == 1
+    callback.answer.assert_awaited_once_with("Товар добавлен в корзину.")
+
+
+@pytest.mark.asyncio
+async def test_add_to_cart_handles_missing_product(db_session, callback_factory) -> None:
+    callback = callback_factory()
+    callback.from_user = SimpleNamespace(
+        id=123456789,
+        username="missing_product_user",
+        first_name="Missing",
+        last_name="Product",
+    )
+    callback_data = CatalogCallback(action=ADD_TO_CART_ACTION, product_id=999)
+
+    await add_to_cart(callback, callback_data, db_session)
+
+    callback.answer.assert_awaited_once_with("Товар не найден.")

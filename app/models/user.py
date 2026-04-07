@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import BigInteger, DateTime, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.database import Base
 
@@ -36,4 +36,10 @@ class User(Base):
         nullable=False,
         server_default=func.now(),
         server_onupdate=func.now(),
+    )
+    cart: Mapped[Optional["Cart"]] = relationship(
+        "Cart",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
     )

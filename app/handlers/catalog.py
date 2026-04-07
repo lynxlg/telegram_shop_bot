@@ -1,13 +1,16 @@
 import logging
+from datetime import datetime, timezone
 from typing import Optional
 
 from aiogram import F, Router
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, InputMediaPhoto, Message
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.callbacks.catalog import (
+    ADD_TO_CART_ACTION,
     CatalogCallback,
     GO_BACK_ACTION,
     OPEN_CATEGORY_ACTION,
@@ -20,6 +23,7 @@ from app.keyboards.catalog import (
     build_root_categories_keyboard,
 )
 from app.models.category import Category
+from app.models.user import User
 from app.services.catalog import (
     get_active_products_by_category,
     get_category_by_id,
@@ -28,6 +32,7 @@ from app.services.catalog import (
     get_product_by_id,
     get_root_categories,
 )
+from app.services.cart import add_product_to_cart
 from app.services.catalog_text import (
     build_categories_text,
     build_product_text,
@@ -43,6 +48,7 @@ CATALOG_LOAD_ERROR_TEXT = "Не удалось загрузить каталог
 CATEGORY_NOT_FOUND_TEXT = "Раздел не найден."
 PRODUCT_NOT_FOUND_TEXT = "Товар не найден."
 EMPTY_CATEGORY_PRODUCTS_TEXT = "В этом разделе пока нет товаров."
+CART_UPDATE_ERROR_TEXT = "Не удалось обновить корзину. Попробуйте позже."
 
 
 async def _delete_message_safely(message) -> None:
@@ -150,6 +156,34 @@ async def _render_root_or_category(
     await _render_category_view(category, message, db)
 
 
+async def _ensure_user_exists(callback: CallbackQuery, db: AsyncSession) -> None:
+    telegram_user = callback.from_user
+    result = await db.execute(select(User).where(User.telegram_id == telegram_user.id))
+    user = result.scalar_one_or_none()
+    now = datetime.now(timezone.utc)
+    username = getattr(telegram_user, "username", None)
+    first_name = getattr(telegram_user, "first_name", "Пользователь")
+    last_name = getattr(telegram_user, "last_name", None)
+
+    if user is None:
+        user = User(
+            telegram_id=telegram_user.id,
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+            role="user",
+            last_activity=now,
+        )
+        db.add(user)
+    else:
+        user.username = username
+        user.first_name = first_name
+        user.last_name = last_name
+        user.last_activity = now
+
+    await db.commit()
+
+
 @router.message(F.text == "Каталог")
 async def open_catalog(message: Message, db: AsyncSession) -> None:
     try:
@@ -207,6 +241,7 @@ async def open_product(
         attributes = await get_product_attributes(db, product.id)
         product_text = build_product_text(product, attributes)
         reply_markup = build_product_keyboard(
+            product_id=product.id,
             category_id=product.category_id,
             parent_category_id=callback_data.parent_category_id,
         )
@@ -252,6 +287,42 @@ async def open_product(
         )
         await _show_text_response(callback.message, CATALOG_LOAD_ERROR_TEXT)
         await callback.answer()
+
+
+@router.callback_query(CatalogCallback.filter(F.action == ADD_TO_CART_ACTION))
+async def add_to_cart(
+    callback: CallbackQuery,
+    callback_data: CatalogCallback,
+    db: AsyncSession,
+) -> None:
+    if callback_data.product_id is None:
+        await callback.answer()
+        return
+
+    try:
+        product = await get_product_by_id(db, callback_data.product_id)
+        if product is None:
+            await callback.answer(PRODUCT_NOT_FOUND_TEXT)
+            return
+
+        await _ensure_user_exists(callback, db)
+        cart_item = await add_product_to_cart(
+            db,
+            callback.from_user.id,
+            callback_data.product_id,
+        )
+        if cart_item is None:
+            await callback.answer(CART_UPDATE_ERROR_TEXT)
+            return
+
+        await callback.answer("Товар добавлен в корзину.")
+    except SQLAlchemyError:
+        logger.exception(
+            "Database error while adding product_id=%s to cart for telegram_id=%s",
+            callback_data.product_id,
+            callback.from_user.id,
+        )
+        await callback.answer(CART_UPDATE_ERROR_TEXT)
 
 
 @router.callback_query(CatalogCallback.filter(F.action == GO_BACK_ACTION))

@@ -3,6 +3,8 @@ from sqlalchemy import inspect, select, text
 from sqlalchemy.exc import IntegrityError
 
 from app.models.product import Product
+from app.models.cart import Cart
+from app.models.cart_item import CartItem
 from app.models.category import Category
 from app.models.user import User
 
@@ -26,6 +28,8 @@ async def test_tables_created(test_engine) -> None:
     assert "products" in tables
     assert "categories" in tables
     assert "product_attributes" in tables
+    assert "carts" in tables
+    assert "cart_items" in tables
 
 
 @pytest.mark.asyncio
@@ -107,3 +111,52 @@ async def test_product_persist_and_load_with_image_url(db_session) -> None:
     saved_product = result.scalar_one()
 
     assert saved_product.image_url == "https://example.com/products/white-tshirt.jpg"
+
+
+@pytest.mark.asyncio
+async def test_cart_item_persist_and_load(db_session) -> None:
+    user = User(
+        telegram_id=555001,
+        username="cart_user",
+        first_name="Cart",
+        last_name="User",
+    )
+    category = Category(name="Футболки")
+    db_session.add_all([user, category])
+    await db_session.flush()
+    product = Product(
+        category_id=category.id,
+        name="Белая футболка",
+        price="1999.00",
+    )
+    db_session.add(product)
+    await db_session.flush()
+    cart = Cart(user_id=user.id)
+    db_session.add(cart)
+    await db_session.flush()
+    cart_item = CartItem(cart_id=cart.id, product_id=product.id, quantity=2)
+    db_session.add(cart_item)
+    await db_session.commit()
+
+    result = await db_session.execute(select(CartItem).where(CartItem.id == cart_item.id))
+    saved_cart_item = result.scalar_one()
+
+    assert saved_cart_item.quantity == 2
+
+
+@pytest.mark.asyncio
+async def test_carts_user_id_unique_constraint(db_session) -> None:
+    user = User(
+        telegram_id=555002,
+        username="one_cart_user",
+        first_name="One",
+        last_name="Cart",
+    )
+    db_session.add(user)
+    await db_session.flush()
+    db_session.add_all([Cart(user_id=user.id), Cart(user_id=user.id)])
+
+    with pytest.raises(IntegrityError):
+        await db_session.commit()
+
+    await db_session.rollback()

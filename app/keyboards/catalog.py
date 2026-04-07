@@ -4,6 +4,7 @@ from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.callbacks.catalog import (
+    ADD_TO_CART_ACTION,
     CatalogCallback,
     GO_BACK_ACTION,
     OPEN_CATEGORY_ACTION,
@@ -82,10 +83,20 @@ def build_products_keyboard(
 
 
 def build_product_keyboard(
+    product_id: int,
     category_id: int,
     parent_category_id: Optional[int],
 ) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
+    builder.button(
+        text="В корзину",
+        callback_data=CatalogCallback(
+            action=ADD_TO_CART_ACTION,
+            product_id=product_id,
+            category_id=category_id,
+            parent_category_id=parent_category_id,
+        ),
+    )
     builder.button(
         text="Назад",
         callback_data=CatalogCallback(
@@ -94,5 +105,5 @@ def build_product_keyboard(
             parent_category_id=parent_category_id,
         ),
     )
+    builder.adjust(1)
     return builder.as_markup()
-

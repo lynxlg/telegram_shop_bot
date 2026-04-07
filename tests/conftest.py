@@ -17,7 +17,10 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from app.handlers.catalog import router as catalog_router
+from app.handlers.cart import router as cart_router
 from app.handlers.common.start import router as start_router
+from app.models.cart import Cart
+from app.models.cart_item import CartItem
 from app.models.category import Category
 from app.models.database import Base
 from app.models.product import Product
@@ -162,7 +165,7 @@ async def db_session(test_engine: AsyncEngine, test_session_factory) -> AsyncGen
             await connection.execute(
                 text(
                     "TRUNCATE TABLE "
-                    "product_attributes, products, categories, users "
+                    "cart_items, carts, product_attributes, products, categories, users "
                     "RESTART IDENTITY CASCADE"
                 )
             )
@@ -178,6 +181,7 @@ def dp() -> Dispatcher:
     dispatcher = Dispatcher()
     dispatcher.include_router(start_router)
     dispatcher.include_router(catalog_router)
+    dispatcher.include_router(cart_router)
     return dispatcher
 
 
@@ -268,3 +272,19 @@ def product_attribute_factory() -> Callable[..., ProductAttribute]:
 @pytest.fixture
 def db_error() -> SQLAlchemyError:
     return SQLAlchemyError("database error")
+
+
+@pytest.fixture
+def cart_factory() -> Callable[..., Cart]:
+    def factory(user_id: int) -> Cart:
+        return Cart(user_id=user_id)
+
+    return factory
+
+
+@pytest.fixture
+def cart_item_factory() -> Callable[..., CartItem]:
+    def factory(cart_id: int, product_id: int, quantity: int = 1) -> CartItem:
+        return CartItem(cart_id=cart_id, product_id=product_id, quantity=quantity)
+
+    return factory

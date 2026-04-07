@@ -107,6 +107,8 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 async def init_db() -> None:
     try:
+        import app.models.cart  # noqa: F401
+        import app.models.cart_item  # noqa: F401
         import app.models.category  # noqa: F401
         import app.models.product  # noqa: F401
         import app.models.product_attribute  # noqa: F401
