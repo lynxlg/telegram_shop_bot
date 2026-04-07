@@ -2,6 +2,8 @@ import pytest
 from sqlalchemy import inspect, select, text
 from sqlalchemy.exc import IntegrityError
 
+from app.models.product import Product
+from app.models.category import Category
 from app.models.user import User
 
 
@@ -21,6 +23,21 @@ async def test_tables_created(test_engine) -> None:
         )
 
     assert "users" in tables
+    assert "products" in tables
+    assert "categories" in tables
+    assert "product_attributes" in tables
+
+
+@pytest.mark.asyncio
+async def test_products_table_contains_image_url_column(test_engine) -> None:
+    async with test_engine.begin() as connection:
+        columns = await connection.run_sync(
+            lambda sync_connection: inspect(sync_connection).get_columns("products")
+        )
+
+    column_names = [column["name"] for column in columns]
+
+    assert "image_url" in column_names
 
 
 @pytest.mark.asyncio
@@ -69,3 +86,24 @@ async def test_telegram_id_unique_constraint(db_session) -> None:
         await db_session.commit()
 
     await db_session.rollback()
+
+
+@pytest.mark.asyncio
+async def test_product_persist_and_load_with_image_url(db_session) -> None:
+    category = Category(name="Футболки")
+    db_session.add(category)
+    await db_session.flush()
+    product = Product(
+        category_id=category.id,
+        name="Белая футболка",
+        price="1999.00",
+        image_url="https://example.com/products/white-tshirt.jpg",
+    )
+
+    db_session.add(product)
+    await db_session.commit()
+
+    result = await db_session.execute(select(Product).where(Product.id == product.id))
+    saved_product = result.scalar_one()
+
+    assert saved_product.image_url == "https://example.com/products/white-tshirt.jpg"

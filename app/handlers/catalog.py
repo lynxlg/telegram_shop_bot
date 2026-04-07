@@ -2,7 +2,8 @@ import logging
 from typing import Optional
 
 from aiogram import F, Router
-from aiogram.types import CallbackQuery, Message
+from aiogram.exceptions import TelegramBadRequest
+from aiogram.types import CallbackQuery, InputMediaPhoto, Message
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -44,6 +45,31 @@ PRODUCT_NOT_FOUND_TEXT = "Товар не найден."
 EMPTY_CATEGORY_PRODUCTS_TEXT = "В этом разделе пока нет товаров."
 
 
+async def _delete_message_safely(message) -> None:
+    try:
+        await message.delete()
+    except Exception:
+        logger.exception("Failed to delete catalog message during navigation")
+
+
+async def _show_text_response(
+    message,
+    text: str,
+    reply_markup=None,
+) -> None:
+    try:
+        if reply_markup is None:
+            await message.edit_text(text)
+        else:
+            await message.edit_text(text, reply_markup=reply_markup)
+    except TelegramBadRequest:
+        if reply_markup is None:
+            await message.answer(text)
+        else:
+            await message.answer(text, reply_markup=reply_markup)
+        await _delete_message_safely(message)
+
+
 async def _show_root_catalog(message: Message, db: AsyncSession) -> None:
     categories = await get_root_categories(db)
     if not categories:
@@ -63,7 +89,8 @@ async def _render_category_view(
 ) -> None:
     child_categories = await get_child_categories(db, category.id)
     if child_categories:
-        await message.edit_text(
+        await _show_text_response(
+            message,
             build_categories_text(child_categories),
             reply_markup=build_child_categories_keyboard(
                 categories=child_categories,
@@ -75,7 +102,8 @@ async def _render_category_view(
 
     products = await get_active_products_by_category(db, category.id)
     if not products:
-        await message.edit_text(
+        await _show_text_response(
+            message,
             EMPTY_CATEGORY_PRODUCTS_TEXT,
             reply_markup=build_child_categories_keyboard(
                 categories=[],
@@ -85,7 +113,8 @@ async def _render_category_view(
         )
         return
 
-    await message.edit_text(
+    await _show_text_response(
+        message,
         build_products_text(category, products),
         reply_markup=build_products_keyboard(
             products=products,
@@ -103,10 +132,11 @@ async def _render_root_or_category(
     if category_id is None:
         categories = await get_root_categories(db)
         if not categories:
-            await message.edit_text(CATALOG_EMPTY_TEXT)
+            await _show_text_response(message, CATALOG_EMPTY_TEXT)
             return
 
-        await message.edit_text(
+        await _show_text_response(
+            message,
             build_categories_text(categories),
             reply_markup=build_root_categories_keyboard(categories),
         )
@@ -114,7 +144,7 @@ async def _render_root_or_category(
 
     category = await get_category_by_id(db, category_id)
     if category is None:
-        await message.edit_text(CATEGORY_NOT_FOUND_TEXT)
+        await _show_text_response(message, CATEGORY_NOT_FOUND_TEXT)
         return
 
     await _render_category_view(category, message, db)
@@ -175,20 +205,52 @@ async def open_product(
             return
 
         attributes = await get_product_attributes(db, product.id)
-        await callback.message.edit_text(
-            build_product_text(product, attributes),
-            reply_markup=build_product_keyboard(
-                category_id=product.category_id,
-                parent_category_id=callback_data.parent_category_id,
-            ),
+        product_text = build_product_text(product, attributes)
+        reply_markup = build_product_keyboard(
+            category_id=product.category_id,
+            parent_category_id=callback_data.parent_category_id,
         )
+
+        if product.image_url:
+            try:
+                await callback.message.edit_media(
+                    media=InputMediaPhoto(
+                        media=product.image_url,
+                        caption=product_text,
+                    ),
+                    reply_markup=reply_markup,
+                )
+            except Exception:
+                logger.exception(
+                    "Failed to render product image for product_id=%s image_url=%s",
+                    product.id,
+                    product.image_url,
+                )
+                await _show_text_response(
+                    callback.message,
+                    product_text,
+                    reply_markup=reply_markup,
+                )
+        else:
+            await _show_text_response(
+                callback.message,
+                product_text,
+                reply_markup=reply_markup,
+            )
         await callback.answer()
     except SQLAlchemyError:
         logger.exception(
             "Database error while opening product_id=%s",
             callback_data.product_id,
         )
-        await callback.message.edit_text(CATALOG_LOAD_ERROR_TEXT)
+        await _show_text_response(callback.message, CATALOG_LOAD_ERROR_TEXT)
+        await callback.answer()
+    except Exception:
+        logger.exception(
+            "Unexpected error while rendering product_id=%s",
+            callback_data.product_id,
+        )
+        await _show_text_response(callback.message, CATALOG_LOAD_ERROR_TEXT)
         await callback.answer()
 
 
@@ -210,6 +272,5 @@ async def go_back(
             "Database error while going back to category_id=%s",
             callback_data.category_id,
         )
-        await callback.message.edit_text(CATALOG_LOAD_ERROR_TEXT)
+        await _show_text_response(callback.message, CATALOG_LOAD_ERROR_TEXT)
         await callback.answer()
-

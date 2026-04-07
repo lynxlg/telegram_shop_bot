@@ -114,6 +114,26 @@ async def test_get_product_by_id_returns_product(db_session) -> None:
 
 
 @pytest.mark.asyncio
+async def test_get_product_by_id_returns_image_url(db_session) -> None:
+    category = Category(name="Футболки")
+    db_session.add(category)
+    await db_session.flush()
+    product = Product(
+        category_id=category.id,
+        name="Белая футболка",
+        price=Decimal("1999.00"),
+        image_url="https://example.com/products/white-tshirt.jpg",
+    )
+    db_session.add(product)
+    await db_session.commit()
+
+    saved_product = await get_product_by_id(db_session, product.id)
+
+    assert saved_product is not None
+    assert saved_product.image_url == "https://example.com/products/white-tshirt.jpg"
+
+
+@pytest.mark.asyncio
 async def test_get_product_attributes_returns_sorted_attributes(db_session) -> None:
     category = Category(name="Футболки")
     db_session.add(category)

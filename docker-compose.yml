@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: telegram_shop_bot_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lynx
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+    ports:
+      - "55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lynx -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20

@@ -2,6 +2,9 @@ from decimal import Decimal
 from unittest.mock import AsyncMock
 
 import pytest
+from aiogram.methods import SendMessage
+from aiogram.types import InputMediaPhoto
+from aiogram.exceptions import TelegramBadRequest
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.callbacks.catalog import (
@@ -140,6 +143,36 @@ async def test_open_product_shows_product_card(db_session, callback_factory) -> 
 
 
 @pytest.mark.asyncio
+async def test_open_product_shows_product_card_with_image(db_session, callback_factory) -> None:
+    category = Category(name="Футболки")
+    db_session.add(category)
+    await db_session.flush()
+    product = Product(
+        category_id=category.id,
+        name="Белая футболка",
+        price=Decimal("1999.00"),
+        description="Базовая модель",
+        image_url="https://example.com/products/white-tshirt.jpg",
+    )
+    db_session.add(product)
+    await db_session.commit()
+    callback = callback_factory()
+    callback_data = CatalogCallback(
+        action=OPEN_PRODUCT_ACTION,
+        product_id=product.id,
+        parent_category_id=None,
+    )
+
+    await open_product(callback, callback_data, db_session)
+
+    callback.message.edit_media.assert_awaited_once()
+    media = callback.message.edit_media.await_args.kwargs["media"]
+    assert isinstance(media, InputMediaPhoto)
+    assert media.media == "https://example.com/products/white-tshirt.jpg"
+    assert "Белая футболка" in media.caption
+
+
+@pytest.mark.asyncio
 async def test_open_product_uses_description_fallback(db_session, callback_factory) -> None:
     category = Category(name="Футболки")
     db_session.add(category)
@@ -206,6 +239,33 @@ async def test_go_back_returns_to_parent_category_level(db_session, callback_fac
 
 
 @pytest.mark.asyncio
+async def test_go_back_returns_to_parent_category_level_from_media_message(
+    db_session,
+    callback_factory,
+) -> None:
+    parent = Category(name="Одежда")
+    db_session.add(parent)
+    await db_session.flush()
+    db_session.add(Category(name="Футболки", parent_id=parent.id))
+    await db_session.commit()
+    callback = callback_factory()
+    callback.message.edit_text = AsyncMock(
+        side_effect=TelegramBadRequest(
+            method=SendMessage(chat_id=1, text="test"),
+            message="message can't be edited",
+        )
+    )
+    callback_data = CatalogCallback(action=GO_BACK_ACTION, category_id=parent.id)
+
+    await go_back(callback, callback_data, db_session)
+
+    callback.message.answer.assert_awaited_once()
+    callback.message.delete.assert_awaited_once()
+    assert "Выберите раздел:" in callback.message.answer.await_args.args[0]
+    assert "Футболки" in callback.message.answer.await_args.args[0]
+
+
+@pytest.mark.asyncio
 async def test_open_category_handles_missing_category(db_session, callback_factory) -> None:
     callback = callback_factory()
     callback_data = CatalogCallback(action=OPEN_CATEGORY_ACTION, category_id=999)
@@ -237,3 +297,33 @@ async def test_open_catalog_handles_database_error(message_factory, monkeypatch)
     await open_catalog(message, AsyncMock())
 
     message.answer.assert_awaited_once_with("Не удалось загрузить каталог. Попробуйте позже.")
+
+
+@pytest.mark.asyncio
+async def test_open_product_handles_image_render_error(db_session, callback_factory) -> None:
+    category = Category(name="Футболки")
+    db_session.add(category)
+    await db_session.flush()
+    product = Product(
+        category_id=category.id,
+        name="Белая футболка",
+        price=Decimal("1999.00"),
+        image_url="https://example.com/products/white-tshirt.jpg",
+    )
+    db_session.add(product)
+    await db_session.commit()
+    callback = callback_factory()
+    callback.message.edit_media = AsyncMock(side_effect=RuntimeError("media failed"))
+    callback_data = CatalogCallback(
+        action=OPEN_PRODUCT_ACTION,
+        product_id=product.id,
+        parent_category_id=None,
+    )
+
+    await open_product(callback, callback_data, db_session)
+
+    callback.message.edit_text.assert_awaited_once()
+    text = callback.message.edit_text.await_args.args[0]
+    assert "Белая футболка" in text
+    assert "Цена: 1999.00 ₽" in text
+    callback.answer.assert_awaited_once()

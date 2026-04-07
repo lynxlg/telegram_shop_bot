@@ -25,10 +25,37 @@ from app.models.product_attribute import ProductAttribute
 
 
 TEST_ENV_FILE = Path(__file__).resolve().parent / ".env.test"
+INTEGRATION_FIXTURES = {"db_session", "test_engine", "test_session_factory"}
 
 
 def _to_sync_database_url(database_url: str) -> str:
     return database_url.replace("+asyncpg", "", 1)
+
+
+def pytest_addoption(parser) -> None:
+    parser.addoption(
+        "--run-integration",
+        action="store_true",
+        default=False,
+        help="run PostgreSQL integration tests",
+    )
+
+
+def pytest_collection_modifyitems(config, items) -> None:
+    run_integration = config.getoption("--run-integration")
+    skip_integration = pytest.mark.skip(
+        reason="integration tests skipped; use --run-integration"
+    )
+
+    for item in items:
+        fixture_names = set(getattr(item, "fixturenames", ()))
+        if fixture_names & INTEGRATION_FIXTURES:
+            item.add_marker(pytest.mark.integration)
+        else:
+            item.add_marker(pytest.mark.unit)
+
+        if "integration" in item.keywords and not run_integration:
+            item.add_marker(skip_integration)
 
 
 @pytest.fixture(scope="session")
@@ -77,6 +104,7 @@ async def test_engine(test_settings) -> AsyncGenerator[AsyncEngine, None]:
     try:
         async with engine.begin() as connection:
             await connection.execute(text("SELECT 1"))
+            await connection.run_sync(Base.metadata.drop_all)
             await connection.run_sync(Base.metadata.create_all)
     except Exception:
         await engine.dispose()
@@ -187,6 +215,9 @@ def callback_factory() -> Callable[..., SimpleNamespace]:
 
         callback_message = message or SimpleNamespace(
             edit_text=AsyncMock(side_effect=answer),
+            edit_media=AsyncMock(side_effect=answer),
+            answer=AsyncMock(side_effect=answer),
+            delete=AsyncMock(side_effect=answer),
         )
         return SimpleNamespace(
             message=callback_message,
@@ -211,6 +242,7 @@ def product_factory() -> Callable[..., Product]:
         name: str,
         price,
         description: Optional[str] = "Описание товара",
+        image_url: Optional[str] = None,
         is_active: bool = True,
     ) -> Product:
         return Product(
@@ -218,6 +250,7 @@ def product_factory() -> Callable[..., Product]:
             name=name,
             price=price,
             description=description,
+            image_url=image_url,
             is_active=is_active,
         )
 

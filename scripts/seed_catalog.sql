@@ -59,12 +59,13 @@ BEGIN
     LIMIT 1;
 
     IF white_tshirt_id IS NULL THEN
-        INSERT INTO products (category_id, name, price, description, is_active)
+        INSERT INTO products (category_id, name, price, description, image_url, is_active)
         VALUES (
             tshirts_id,
             'Белая базовая футболка',
             1999.00,
             'Хлопковая футболка прямого кроя на каждый день.',
+            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTm9V34suJZgqAzfLm1gaJCsLpJn-XApF7awg&s',
             TRUE
         )
         RETURNING id INTO white_tshirt_id;
@@ -76,12 +77,13 @@ BEGIN
     LIMIT 1;
 
     IF black_tshirt_id IS NULL THEN
-        INSERT INTO products (category_id, name, price, description, is_active)
+        INSERT INTO products (category_id, name, price, description, image_url, is_active)
         VALUES (
             tshirts_id,
             'Черная футболка oversized',
             2490.00,
             'Свободная футболка из плотного хлопка.',
+            NULL,
             TRUE
         )
         RETURNING id INTO black_tshirt_id;
@@ -93,12 +95,13 @@ BEGIN
     LIMIT 1;
 
     IF gray_hoodie_id IS NULL THEN
-        INSERT INTO products (category_id, name, price, description, is_active)
+        INSERT INTO products (category_id, name, price, description, image_url, is_active)
         VALUES (
             hoodies_id,
             'Серое худи на молнии',
             4590.00,
             'Теплое худи с начесом и металлической молнией.',
+            'https://example.com/products/gray-zip-hoodie.jpg',
             TRUE
         )
         RETURNING id INTO gray_hoodie_id;
@@ -110,16 +113,25 @@ BEGIN
     LIMIT 1;
 
     IF blue_jeans_id IS NULL THEN
-        INSERT INTO products (category_id, name, price, description, is_active)
+        INSERT INTO products (category_id, name, price, description, image_url, is_active)
         VALUES (
             pants_id,
             'Синие джинсы regular fit',
             3990.00,
             'Классические джинсы средней посадки на каждый день.',
+            NULL,
             TRUE
         )
         RETURNING id INTO blue_jeans_id;
     END IF;
+
+    UPDATE products
+    SET image_url = 'https://example.com/products/white-basic-tshirt.jpg'
+    WHERE id = white_tshirt_id;
+
+    UPDATE products
+    SET image_url = 'https://example.com/products/gray-zip-hoodie.jpg'
+    WHERE id = gray_hoodie_id;
 
     INSERT INTO product_attributes (product_id, name, value)
     SELECT white_tshirt_id, 'Размер', 'M'

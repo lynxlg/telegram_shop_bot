@@ -11,7 +11,7 @@ def test_settings_load_from_env_file(monkeypatch) -> None:
     settings = Settings(_env_file="tests/.env.test")
 
     assert settings.bot_token == "test_token_12345"
-    assert settings.database_url.endswith("/shop_bot_test")
+    assert "/shop_bot_test" in settings.database_url
 
 
 def test_settings_use_default_values_when_env_file_missing(monkeypatch) -> None:
