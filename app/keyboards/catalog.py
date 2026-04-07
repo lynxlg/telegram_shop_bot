@@ -1,0 +1,98 @@
+from typing import List, Optional
+
+from aiogram.types import InlineKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+from app.callbacks.catalog import (
+    CatalogCallback,
+    GO_BACK_ACTION,
+    OPEN_CATEGORY_ACTION,
+    OPEN_PRODUCT_ACTION,
+)
+from app.models.category import Category
+from app.models.product import Product
+
+
+def build_root_categories_keyboard(categories: List[Category]) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    for category in categories:
+        builder.button(
+            text=category.name,
+            callback_data=CatalogCallback(
+                action=OPEN_CATEGORY_ACTION,
+                category_id=category.id,
+                parent_category_id=None,
+            ),
+        )
+    builder.adjust(1)
+    return builder.as_markup()
+
+
+def build_child_categories_keyboard(
+    categories: List[Category],
+    current_category_id: int,
+    parent_category_id: Optional[int],
+) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    for category in categories:
+        builder.button(
+            text=category.name,
+            callback_data=CatalogCallback(
+                action=OPEN_CATEGORY_ACTION,
+                category_id=category.id,
+                parent_category_id=current_category_id,
+            ),
+        )
+    builder.button(
+        text="Назад",
+        callback_data=CatalogCallback(
+            action=GO_BACK_ACTION,
+            category_id=parent_category_id,
+        ),
+    )
+    builder.adjust(1)
+    return builder.as_markup()
+
+
+def build_products_keyboard(
+    products: List[Product],
+    category_id: int,
+    parent_category_id: Optional[int],
+) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    for product in products:
+        builder.button(
+            text=f"{product.name} - {product.price:.2f} ₽",
+            callback_data=CatalogCallback(
+                action=OPEN_PRODUCT_ACTION,
+                product_id=product.id,
+                category_id=category_id,
+                parent_category_id=parent_category_id,
+            ),
+        )
+    builder.button(
+        text="Назад",
+        callback_data=CatalogCallback(
+            action=GO_BACK_ACTION,
+            category_id=parent_category_id,
+        ),
+    )
+    builder.adjust(1)
+    return builder.as_markup()
+
+
+def build_product_keyboard(
+    category_id: int,
+    parent_category_id: Optional[int],
+) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(
+        text="Назад",
+        callback_data=CatalogCallback(
+            action=GO_BACK_ACTION,
+            category_id=category_id,
+            parent_category_id=parent_category_id,
+        ),
+    )
+    return builder.as_markup()
+

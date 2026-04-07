@@ -2,6 +2,7 @@
 Описание проекта находится в  PROJECT.md.
 Если какие-то пакеты не стоят, поставь их, используя .venv.
 Используй context7.
+Не читай prompts.md.
 ## Stack
 Python, Aiogram, PostreSQL
 ## Conventions

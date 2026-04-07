@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.keyboards.main_menu import get_main_menu_keyboard
 from app.models.user import User
 
 
@@ -52,7 +53,8 @@ async def cmd_start(message: Message, db: AsyncSession) -> None:
             logger.info("Updated last_activity for telegram_id=%s", telegram_user.id)
 
         await message.answer(
-            f"Добро пожаловать, {telegram_user.first_name}! Бот запущен."
+            f"Добро пожаловать, {telegram_user.first_name}! Бот запущен.",
+            reply_markup=get_main_menu_keyboard(),
         )
     except SQLAlchemyError:
         await db.rollback()

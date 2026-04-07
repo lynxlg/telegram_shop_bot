@@ -2,6 +2,7 @@ import logging
 from typing import AsyncGenerator, Optional
 
 from sqlalchemy import text
+from sqlalchemy.engine.url import make_url
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -37,6 +38,59 @@ async_session_factory = async_sessionmaker(
 )
 
 
+def _build_admin_database_url(database_url: str) -> Optional[str]:
+    sync_url = make_url(database_url.replace("+asyncpg", "", 1))
+
+    if not sync_url.drivername.startswith("postgresql"):
+        return None
+
+    admin_url = (
+        sync_url.set(database="postgres")
+        .render_as_string(hide_password=False)
+        .replace("postgresql://", "postgresql+asyncpg://", 1)
+    )
+    return admin_url
+
+
+def _quote_identifier(identifier: str) -> str:
+    return '"' + identifier.replace('"', '""') + '"'
+
+
+async def ensure_database_exists() -> None:
+    database_url = settings.database_url
+    sync_url = make_url(database_url.replace("+asyncpg", "", 1))
+    database_name = sync_url.database
+    admin_database_url = _build_admin_database_url(database_url)
+
+    if admin_database_url is None or database_name is None:
+        return
+
+    admin_engine = create_async_engine(
+        admin_database_url,
+        future=True,
+        isolation_level="AUTOCOMMIT",
+    )
+
+    try:
+        async with admin_engine.connect() as connection:
+            result = await connection.execute(
+                text("SELECT 1 FROM pg_database WHERE datname = :database_name"),
+                {"database_name": database_name},
+            )
+            database_exists = result.scalar_one_or_none() is not None
+
+            if not database_exists:
+                await connection.execute(
+                    text(f"CREATE DATABASE {_quote_identifier(database_name)}")
+                )
+                logger.info("Database %s created", database_name)
+    except SQLAlchemyError:
+        logger.exception("Failed to ensure database exists")
+        raise
+    finally:
+        await admin_engine.dispose()
+
+
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     session: Optional[AsyncSession] = None
 
@@ -53,7 +107,12 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 async def init_db() -> None:
     try:
+        import app.models.category  # noqa: F401
+        import app.models.product  # noqa: F401
+        import app.models.product_attribute  # noqa: F401
         import app.models.user  # noqa: F401
+
+        await ensure_database_exists()
 
         async with engine.begin() as connection:
             await connection.execute(text("SELECT 1"))

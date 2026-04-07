@@ -1,6 +1,6 @@
 from pathlib import Path
 from types import SimpleNamespace
-from typing import AsyncGenerator, Callable
+from typing import AsyncGenerator, Callable, Optional
 from unittest.mock import AsyncMock
 
 import pytest
@@ -16,8 +16,12 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from app.handlers.catalog import router as catalog_router
 from app.handlers.common.start import router as start_router
+from app.models.category import Category
 from app.models.database import Base
+from app.models.product import Product
+from app.models.product_attribute import ProductAttribute
 
 
 TEST_ENV_FILE = Path(__file__).resolve().parent / ".env.test"
@@ -25,6 +29,7 @@ TEST_ENV_FILE = Path(__file__).resolve().parent / ".env.test"
 
 def _to_sync_database_url(database_url: str) -> str:
     return database_url.replace("+asyncpg", "", 1)
+
 
 @pytest.fixture(scope="session")
 def test_settings():
@@ -126,7 +131,13 @@ async def db_session(test_engine: AsyncEngine, test_session_factory) -> AsyncGen
         await session.close()
 
         async with test_engine.begin() as connection:
-            await connection.execute(text("TRUNCATE TABLE users RESTART IDENTITY CASCADE"))
+            await connection.execute(
+                text(
+                    "TRUNCATE TABLE "
+                    "product_attributes, products, categories, users "
+                    "RESTART IDENTITY CASCADE"
+                )
+            )
 
 
 @pytest.fixture
@@ -138,6 +149,7 @@ def bot() -> Bot:
 def dp() -> Dispatcher:
     dispatcher = Dispatcher()
     dispatcher.include_router(start_router)
+    dispatcher.include_router(catalog_router)
     return dispatcher
 
 
@@ -163,6 +175,59 @@ def message_factory() -> Callable[..., SimpleNamespace]:
             ),
             answer=AsyncMock(side_effect=answer),
         )
+
+    return factory
+
+
+@pytest.fixture
+def callback_factory() -> Callable[..., SimpleNamespace]:
+    def factory(message: Optional[SimpleNamespace] = None) -> SimpleNamespace:
+        async def answer(*args, **kwargs):
+            return SimpleNamespace(args=args, kwargs=kwargs)
+
+        callback_message = message or SimpleNamespace(
+            edit_text=AsyncMock(side_effect=answer),
+        )
+        return SimpleNamespace(
+            message=callback_message,
+            answer=AsyncMock(side_effect=answer),
+        )
+
+    return factory
+
+
+@pytest.fixture
+def category_factory() -> Callable[..., Category]:
+    def factory(name: str, parent_id: Optional[int] = None) -> Category:
+        return Category(name=name, parent_id=parent_id)
+
+    return factory
+
+
+@pytest.fixture
+def product_factory() -> Callable[..., Product]:
+    def factory(
+        category_id: int,
+        name: str,
+        price,
+        description: Optional[str] = "Описание товара",
+        is_active: bool = True,
+    ) -> Product:
+        return Product(
+            category_id=category_id,
+            name=name,
+            price=price,
+            description=description,
+            is_active=is_active,
+        )
+
+    return factory
+
+
+@pytest.fixture
+def product_attribute_factory() -> Callable[..., ProductAttribute]:
+    def factory(product_id: int, name: str, value: str) -> ProductAttribute:
+        return ProductAttribute(product_id=product_id, name=name, value=value)
 
     return factory
 

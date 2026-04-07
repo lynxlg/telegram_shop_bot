@@ -43,9 +43,11 @@ async def test_init_db_creates_tables(monkeypatch) -> None:
     fake_engine = SimpleNamespace(begin=lambda: FakeAsyncContextManager(connection))
 
     monkeypatch.setattr(database_module, "engine", fake_engine)
+    monkeypatch.setattr(database_module, "ensure_database_exists", AsyncMock())
 
     await database_module.init_db()
 
+    database_module.ensure_database_exists.assert_awaited_once()
     connection.execute.assert_awaited_once()
     connection.run_sync.assert_awaited_once()
 
@@ -59,9 +61,70 @@ async def test_init_db_raises_on_error(monkeypatch) -> None:
     fake_engine = SimpleNamespace(begin=lambda: FakeAsyncContextManager(connection))
 
     monkeypatch.setattr(database_module, "engine", fake_engine)
+    monkeypatch.setattr(database_module, "ensure_database_exists", AsyncMock())
 
     with pytest.raises(SQLAlchemyError):
         await database_module.init_db()
+
+
+@pytest.mark.asyncio
+async def test_ensure_database_exists_creates_missing_database(monkeypatch) -> None:
+    result = SimpleNamespace(scalar_one_or_none=MagicMock(return_value=None))
+    connection = SimpleNamespace(
+        execute=AsyncMock(return_value=result),
+    )
+    fake_admin_engine = SimpleNamespace(
+        connect=lambda: FakeAsyncContextManager(connection),
+        dispose=AsyncMock(),
+    )
+
+    monkeypatch.setattr(
+        database_module,
+        "settings",
+        SimpleNamespace(
+            database_url="postgresql+asyncpg://postgres:postgres@localhost:5432/telegram_shop_bot"
+        ),
+    )
+    monkeypatch.setattr(
+        database_module,
+        "create_async_engine",
+        MagicMock(return_value=fake_admin_engine),
+    )
+
+    await database_module.ensure_database_exists()
+
+    assert connection.execute.await_count == 2
+    fake_admin_engine.dispose.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_ensure_database_exists_skips_when_database_already_exists(monkeypatch) -> None:
+    result = SimpleNamespace(scalar_one_or_none=MagicMock(return_value=1))
+    connection = SimpleNamespace(
+        execute=AsyncMock(return_value=result),
+    )
+    fake_admin_engine = SimpleNamespace(
+        connect=lambda: FakeAsyncContextManager(connection),
+        dispose=AsyncMock(),
+    )
+
+    monkeypatch.setattr(
+        database_module,
+        "settings",
+        SimpleNamespace(
+            database_url="postgresql+asyncpg://postgres:postgres@localhost:5432/telegram_shop_bot"
+        ),
+    )
+    monkeypatch.setattr(
+        database_module,
+        "create_async_engine",
+        MagicMock(return_value=fake_admin_engine),
+    )
+
+    await database_module.ensure_database_exists()
+
+    connection.execute.assert_awaited_once()
+    fake_admin_engine.dispose.assert_awaited_once()
 
 
 @pytest.mark.asyncio

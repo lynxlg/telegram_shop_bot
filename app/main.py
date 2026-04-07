@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 from app.bot import create_bot, create_dispatcher
+from app.handlers.catalog import router as catalog_router
 from app.handlers.common.start import router as start_router
 from app.middlewares.db_session import DbSessionMiddleware
 from app.models.database import dispose_engine, init_db
@@ -21,6 +22,7 @@ async def main() -> None:
 
     dispatcher.update.middleware(DbSessionMiddleware())
     dispatcher.include_router(start_router)
+    dispatcher.include_router(catalog_router)
 
     try:
         await init_db()

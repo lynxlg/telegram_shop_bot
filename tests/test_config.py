@@ -4,12 +4,20 @@ from pydantic import ValidationError
 from app.config import Settings
 
 
-def test_settings_load_from_env_file(test_settings) -> None:
-    assert test_settings.bot_token == "test_token_12345"
-    assert test_settings.database_url.endswith("/shop_bot_test")
+def test_settings_load_from_env_file(monkeypatch) -> None:
+    monkeypatch.delenv("BOT_TOKEN", raising=False)
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+
+    settings = Settings(_env_file="tests/.env.test")
+
+    assert settings.bot_token == "test_token_12345"
+    assert settings.database_url.endswith("/shop_bot_test")
 
 
-def test_settings_use_default_values_when_env_file_missing() -> None:
+def test_settings_use_default_values_when_env_file_missing(monkeypatch) -> None:
+    monkeypatch.delenv("BOT_TOKEN", raising=False)
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+
     settings = Settings(_env_file=None)
 
     assert settings.bot_token == "TEST_BOT_TOKEN"

@@ -25,7 +25,7 @@ async def test_main_runs_polling(monkeypatch) -> None:
     await main_module.main()
 
     fake_dispatcher.update.middleware.assert_called_once()
-    fake_dispatcher.include_router.assert_called_once()
+    assert fake_dispatcher.include_router.call_count == 2
     fake_dispatcher.start_polling.assert_awaited_once_with(fake_bot)
     fake_bot.session.close.assert_awaited_once()
     dispose_engine.assert_awaited_once()

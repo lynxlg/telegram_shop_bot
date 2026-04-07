@@ -8,7 +8,10 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.config import get_settings
+from app.models.category import Category  # noqa: F401
 from app.models.database import Base
+from app.models.product import Product  # noqa: F401
+from app.models.product_attribute import ProductAttribute  # noqa: F401
 from app.models.user import User  # noqa: F401
 
 

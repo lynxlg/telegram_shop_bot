@@ -26,6 +26,8 @@ async def test_start_registers_new_user(db_session, message_factory) -> None:
     assert user.last_name == "User"
     message.answer.assert_awaited_once()
     assert "Добро пожаловать" in message.answer.await_args.args[0]
+    reply_markup = message.answer.await_args.kwargs["reply_markup"]
+    assert reply_markup.keyboard[0][0].text == "Каталог"
 
 
 @pytest.mark.asyncio
