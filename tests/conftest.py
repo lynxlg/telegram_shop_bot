@@ -1,6 +1,7 @@
 from pathlib import Path
 from types import SimpleNamespace
 from typing import AsyncGenerator, Callable, Optional
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from unittest.mock import AsyncMock
 
 import pytest
@@ -19,20 +20,34 @@ from sqlalchemy.ext.asyncio import (
 from app.handlers.catalog import router as catalog_router
 from app.handlers.cart import router as cart_router
 from app.handlers.common.start import router as start_router
+from app.handlers.order_status import router as order_status_router
 from app.models.cart import Cart
 from app.models.cart_item import CartItem
 from app.models.category import Category
 from app.models.database import Base
+from app.models.order import Order
+from app.models.order_item import OrderItem
 from app.models.product import Product
 from app.models.product_attribute import ProductAttribute
 
 
 TEST_ENV_FILE = Path(__file__).resolve().parent / ".env.test"
 INTEGRATION_FIXTURES = {"db_session", "test_engine", "test_session_factory"}
+ASYNC_PG_TIMEOUT_SECONDS = 3
 
 
 def _to_sync_database_url(database_url: str) -> str:
     return database_url.replace("+asyncpg", "", 1)
+
+
+def _normalize_asyncpg_database_url(database_url: str) -> str:
+    parts = urlsplit(database_url)
+    query = dict(parse_qsl(parts.query, keep_blank_values=True))
+    query.pop("connect_timeout", None)
+    query.pop("timeout", None)
+    return urlunsplit(
+        (parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment)
+    )
 
 
 def pytest_addoption(parser) -> None:
@@ -64,13 +79,20 @@ def pytest_collection_modifyitems(config, items) -> None:
 @pytest.fixture(scope="session")
 def test_settings():
     from app.config import Settings
+    values: dict[str, str] = {}
+    for line in TEST_ENV_FILE.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        key, value = stripped.split("=", 1)
+        values[key.lower()] = value
 
-    return Settings(_env_file=TEST_ENV_FILE)
+    return Settings(**values)
 
 
 @pytest_asyncio.fixture
 async def test_engine(test_settings) -> AsyncGenerator[AsyncEngine, None]:
-    database_url = test_settings.database_url
+    database_url = _normalize_asyncpg_database_url(test_settings.database_url)
     database_name = make_url(_to_sync_database_url(database_url)).database
     admin_database_url = (
         make_url(database_url.replace("+asyncpg", "", 1))
@@ -82,6 +104,7 @@ async def test_engine(test_settings) -> AsyncGenerator[AsyncEngine, None]:
         admin_database_url,
         future=True,
         isolation_level="AUTOCOMMIT",
+        connect_args={"timeout": ASYNC_PG_TIMEOUT_SECONDS},
     )
 
     try:
@@ -96,22 +119,32 @@ async def test_engine(test_settings) -> AsyncGenerator[AsyncEngine, None]:
 
             if not database_exists:
                 await connection.execute(text(f'CREATE DATABASE "{database_name}"'))
-    except Exception:
+    except Exception as exc:
         await admin_engine.dispose()
-        pytest.skip("Не удалось создать отдельную тестовую БД PostgreSQL")
+        pytest.skip(
+            "Не удалось создать отдельную тестовую БД PostgreSQL: "
+            f"{type(exc).__name__}: {exc}"
+        )
     finally:
         await admin_engine.dispose()
 
-    engine = create_async_engine(database_url, future=True)
+    engine = create_async_engine(
+        database_url,
+        future=True,
+        connect_args={"timeout": ASYNC_PG_TIMEOUT_SECONDS},
+    )
 
     try:
         async with engine.begin() as connection:
             await connection.execute(text("SELECT 1"))
             await connection.run_sync(Base.metadata.drop_all)
             await connection.run_sync(Base.metadata.create_all)
-    except Exception:
+    except Exception as exc:
         await engine.dispose()
-        pytest.skip("PostgreSQL недоступен для интеграционных тестов")
+        pytest.skip(
+            "PostgreSQL недоступен для интеграционных тестов: "
+            f"{type(exc).__name__}: {exc}"
+        )
 
     try:
         yield engine
@@ -125,6 +158,7 @@ async def test_engine(test_settings) -> AsyncGenerator[AsyncEngine, None]:
             admin_database_url,
             future=True,
             isolation_level="AUTOCOMMIT",
+            connect_args={"timeout": ASYNC_PG_TIMEOUT_SECONDS},
         )
         try:
             async with admin_engine.connect() as connection:
@@ -165,7 +199,7 @@ async def db_session(test_engine: AsyncEngine, test_session_factory) -> AsyncGen
             await connection.execute(
                 text(
                     "TRUNCATE TABLE "
-                    "cart_items, carts, product_attributes, products, categories, users "
+                    "order_items, orders, cart_items, carts, product_attributes, products, categories, users "
                     "RESTART IDENTITY CASCADE"
                 )
             )
@@ -182,6 +216,7 @@ def dp() -> Dispatcher:
     dispatcher.include_router(start_router)
     dispatcher.include_router(catalog_router)
     dispatcher.include_router(cart_router)
+    dispatcher.include_router(order_status_router)
     return dispatcher
 
 
@@ -193,6 +228,7 @@ def message_factory() -> Callable[..., SimpleNamespace]:
         first_name: str = "Test",
         last_name: str = "User",
         text_value: str = "/start",
+        contact=None,
     ) -> SimpleNamespace:
         async def answer(*args, **kwargs):
             return SimpleNamespace(args=args, kwargs=kwargs)
@@ -205,6 +241,7 @@ def message_factory() -> Callable[..., SimpleNamespace]:
                 first_name=first_name,
                 last_name=last_name,
             ),
+            contact=contact,
             answer=AsyncMock(side_effect=answer),
         )
 

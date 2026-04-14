@@ -38,17 +38,20 @@ from app.services.catalog_text import (
     build_product_text,
     build_products_text,
 )
+from app.ui_text import get_ui_text
 
 
 logger = logging.getLogger(__name__)
 router = Router()
 
-CATALOG_EMPTY_TEXT = "Каталог пока пуст."
-CATALOG_LOAD_ERROR_TEXT = "Не удалось загрузить каталог. Попробуйте позже."
-CATEGORY_NOT_FOUND_TEXT = "Раздел не найден."
-PRODUCT_NOT_FOUND_TEXT = "Товар не найден."
-EMPTY_CATEGORY_PRODUCTS_TEXT = "В этом разделе пока нет товаров."
-CART_UPDATE_ERROR_TEXT = "Не удалось обновить корзину. Попробуйте позже."
+CATALOG_EMPTY_TEXT = get_ui_text("catalog", "empty")
+CATALOG_LOAD_ERROR_TEXT = get_ui_text("catalog", "load_error")
+CATEGORY_NOT_FOUND_TEXT = get_ui_text("catalog", "category_not_found")
+PRODUCT_NOT_FOUND_TEXT = get_ui_text("catalog", "product_not_found")
+EMPTY_CATEGORY_PRODUCTS_TEXT = get_ui_text("catalog", "empty_category_products")
+CART_UPDATE_ERROR_TEXT = get_ui_text("cart", "update_error")
+CATALOG_BUTTON_TEXT = get_ui_text("main_menu", "catalog_button")
+ADD_TO_CART_SUCCESS_TEXT = get_ui_text("catalog", "add_to_cart_success")
 
 
 async def _delete_message_safely(message) -> None:
@@ -184,7 +187,7 @@ async def _ensure_user_exists(callback: CallbackQuery, db: AsyncSession) -> None
     await db.commit()
 
 
-@router.message(F.text == "Каталог")
+@router.message(F.text == CATALOG_BUTTON_TEXT)
 async def open_catalog(message: Message, db: AsyncSession) -> None:
     try:
         await _show_root_catalog(message, db)
@@ -315,7 +318,7 @@ async def add_to_cart(
             await callback.answer(CART_UPDATE_ERROR_TEXT)
             return
 
-        await callback.answer("Товар добавлен в корзину.")
+        await callback.answer(ADD_TO_CART_SUCCESS_TEXT)
     except SQLAlchemyError:
         logger.exception(
             "Database error while adding product_id=%s to cart for telegram_id=%s",

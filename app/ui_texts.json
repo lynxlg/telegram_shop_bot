@@ -1,0 +1,75 @@
+{
+  "main_menu": {
+    "catalog_button": "Каталог",
+    "cart_button": "Корзина",
+    "order_status_button": "Статус заказа"
+  },
+  "catalog": {
+    "empty": "Каталог пока пуст.",
+    "load_error": "Не удалось загрузить каталог. Попробуйте позже.",
+    "category_not_found": "Раздел не найден.",
+    "product_not_found": "Товар не найден.",
+    "empty_category_products": "В этом разделе пока нет товаров.",
+    "add_to_cart_success": "Товар добавлен в корзину.",
+    "categories_title": "Выберите раздел:",
+    "products_title": "Товары:",
+    "product_list_item": "{name} - {price}",
+    "empty_description": "Описание отсутствует.",
+    "empty_attributes": "Характеристики не указаны.",
+    "price_label": "Цена: {price}",
+    "description_label": "Описание: {description}",
+    "attributes_title": "Характеристики:",
+    "back_button": "Назад",
+    "add_to_cart_button": "В корзину",
+    "product_button": "{name} - {price}"
+  },
+  "cart": {
+    "empty": "Корзина пуста.",
+    "item_not_found": "Позиция корзины не найдена.",
+    "update_error": "Не удалось обновить корзину. Попробуйте позже.",
+    "title": "Корзина:",
+    "item_line": "{index}. {name}\nЦена: {price}\nКоличество: {quantity}\nСумма: {total}",
+    "total_label": "Итого: {total}",
+    "checkout_button": "Оформить заказ",
+    "increase_button": "+",
+    "decrease_button": "-",
+    "remove_item_button": "Удалить {product_name}"
+  },
+  "checkout": {
+    "error": "Не удалось оформить заказ. Попробуйте позже.",
+    "phone_prompt": "Введите номер телефона для связи или отправьте контакт.",
+    "address_prompt": "Введите адрес доставки.",
+    "invalid_phone": "Введите корректный номер телефона.",
+    "invalid_address": "Введите корректный адрес доставки.",
+    "cancelled": "Оформление заказа отменено.",
+    "cancelled_callback": "Оформление отменено.",
+    "cancel_button": "Отменить",
+    "cancel_checkout_button": "Отменить оформление",
+    "send_phone_button": "Отправить телефон",
+    "confirm_button": "Подтвердить заказ",
+    "success": "Заказ оформлен.",
+    "confirmation_title": "Подтвердите заказ:",
+    "phone_label": "Телефон: {phone}",
+    "address_label": "Адрес: {address}",
+    "confirmation_total_label": "Итого к подтверждению: {total}",
+    "order_number_label": "Номер заказа: {order_number}"
+  },
+  "order_status": {
+    "title": "Активные заказы:",
+    "empty": "У вас нет активных заказов.",
+    "load_error": "Не удалось загрузить статусы заказов. Попробуйте позже.",
+    "item_line": "{index}. {order_number} - {status}",
+    "status_new": "Принят",
+    "status_accepted": "Принят",
+    "status_assembling": "Собран",
+    "status_delivering": "Передан в доставку",
+    "status_completed": "Получен",
+    "status_cancelled": "Отменен",
+    "status_unknown": "Статус: {status}"
+  },
+  "start": {
+    "missing_user": "Не удалось определить пользователя.",
+    "welcome": "Добро пожаловать, {first_name}! Бот запущен.",
+    "save_error": "Не удалось сохранить ваши данные. Попробуйте еще раз позже."
+  }
+}

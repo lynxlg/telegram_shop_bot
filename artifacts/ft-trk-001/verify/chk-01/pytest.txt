@@ -1,0 +1,23 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.3.4, pluggy-1.6.0 -- /home/lynx/telegram_shop_bot/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/lynx/telegram_shop_bot
+configfile: pytest.ini
+plugins: cov-6.0.0, mock-3.14.0, asyncio-0.23.8, anyio-4.13.0, env-1.1.5
+asyncio: mode=Mode.AUTO
+collecting ... collected 12 items
+
+tests/handlers/test_start.py::test_start_registers_new_user SKIPPED      [  8%]
+tests/handlers/test_start.py::test_start_updates_existing_user_without_duplicates SKIPPED [ 16%]
+tests/handlers/test_start.py::test_start_saves_all_user_fields SKIPPED   [ 25%]
+tests/handlers/test_start.py::test_start_updates_last_activity_on_repeat SKIPPED [ 33%]
+tests/handlers/test_start.py::test_start_handles_database_error PASSED   [ 41%]
+tests/handlers/test_start.py::test_start_handles_missing_from_user PASSED [ 50%]
+tests/handlers/test_start.py::test_start_updates_existing_user_unit PASSED [ 58%]
+tests/handlers/test_order_status.py::test_show_active_order_statuses_unit_happy_path PASSED [ 66%]
+tests/handlers/test_order_status.py::test_show_active_order_statuses_unit_empty_state PASSED [ 75%]
+tests/handlers/test_order_status.py::test_show_active_order_statuses_lists_only_current_user_active_orders SKIPPED [ 83%]
+tests/handlers/test_order_status.py::test_show_active_order_statuses_shows_empty_state SKIPPED [ 91%]
+tests/handlers/test_order_status.py::test_show_active_order_statuses_handles_database_error PASSED [100%]
+
+======================== 6 passed, 6 skipped in 20.89s =========================

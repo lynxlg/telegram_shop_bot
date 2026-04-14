@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import pytest
 from sqlalchemy import inspect, select, text
 from sqlalchemy.exc import IntegrityError
@@ -6,6 +8,8 @@ from app.models.product import Product
 from app.models.cart import Cart
 from app.models.cart_item import CartItem
 from app.models.category import Category
+from app.models.order import Order
+from app.models.order_item import OrderItem
 from app.models.user import User
 
 
@@ -30,6 +34,8 @@ async def test_tables_created(test_engine) -> None:
     assert "product_attributes" in tables
     assert "carts" in tables
     assert "cart_items" in tables
+    assert "orders" in tables
+    assert "order_items" in tables
 
 
 @pytest.mark.asyncio
@@ -160,3 +166,52 @@ async def test_carts_user_id_unique_constraint(db_session) -> None:
         await db_session.commit()
 
     await db_session.rollback()
+
+
+@pytest.mark.asyncio
+async def test_order_persist_and_load_with_items(db_session) -> None:
+    user = User(
+        telegram_id=555003,
+        username="order_user",
+        first_name="Order",
+        last_name="User",
+    )
+    category = Category(name="Толстовки")
+    db_session.add_all([user, category])
+    await db_session.flush()
+    product = Product(
+        category_id=category.id,
+        name="Черное худи",
+        price="2999.00",
+    )
+    db_session.add(product)
+    await db_session.flush()
+    order = Order(
+        user_id=user.id,
+        order_number="ORD-000777",
+        status="new",
+        phone="+79991234567",
+        shipping_address="Москва, Пушкина 10",
+        total_amount=Decimal("2999.00"),
+    )
+    db_session.add(order)
+    await db_session.flush()
+    order_item = OrderItem(
+        order_id=order.id,
+        product_id=product.id,
+        product_name=product.name,
+        unit_price=product.price,
+        quantity=1,
+        line_total=product.price,
+    )
+    db_session.add(order_item)
+    await db_session.commit()
+
+    order_result = await db_session.execute(select(Order).where(Order.id == order.id))
+    saved_order = order_result.scalar_one()
+    items_result = await db_session.execute(select(OrderItem).where(OrderItem.order_id == order.id))
+    saved_item = items_result.scalar_one()
+
+    assert saved_order.order_number == "ORD-000777"
+    assert saved_order.total_amount == Decimal("2999.00")
+    assert saved_item.product_name == "Черное худи"

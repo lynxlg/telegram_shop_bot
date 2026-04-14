@@ -12,6 +12,11 @@ from app.callbacks.catalog import (
 )
 from app.models.category import Category
 from app.models.product import Product
+from app.ui_text import format_ui_text, get_ui_text
+
+
+BACK_BUTTON_TEXT = get_ui_text("catalog", "back_button")
+ADD_TO_CART_BUTTON_TEXT = get_ui_text("catalog", "add_to_cart_button")
 
 
 def build_root_categories_keyboard(categories: List[Category]) -> InlineKeyboardMarkup:
@@ -45,7 +50,7 @@ def build_child_categories_keyboard(
             ),
         )
     builder.button(
-        text="Назад",
+        text=BACK_BUTTON_TEXT,
         callback_data=CatalogCallback(
             action=GO_BACK_ACTION,
             category_id=parent_category_id,
@@ -63,7 +68,12 @@ def build_products_keyboard(
     builder = InlineKeyboardBuilder()
     for product in products:
         builder.button(
-            text=f"{product.name} - {product.price:.2f} ₽",
+            text=format_ui_text(
+                "catalog",
+                "product_button",
+                name=product.name,
+                price=f"{product.price:.2f} ₽",
+            ),
             callback_data=CatalogCallback(
                 action=OPEN_PRODUCT_ACTION,
                 product_id=product.id,
@@ -72,7 +82,7 @@ def build_products_keyboard(
             ),
         )
     builder.button(
-        text="Назад",
+        text=BACK_BUTTON_TEXT,
         callback_data=CatalogCallback(
             action=GO_BACK_ACTION,
             category_id=parent_category_id,
@@ -89,7 +99,7 @@ def build_product_keyboard(
 ) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="В корзину",
+        text=ADD_TO_CART_BUTTON_TEXT,
         callback_data=CatalogCallback(
             action=ADD_TO_CART_ACTION,
             product_id=product_id,
@@ -98,7 +108,7 @@ def build_product_keyboard(
         ),
     )
     builder.button(
-        text="Назад",
+        text=BACK_BUTTON_TEXT,
         callback_data=CatalogCallback(
             action=GO_BACK_ACTION,
             category_id=category_id,

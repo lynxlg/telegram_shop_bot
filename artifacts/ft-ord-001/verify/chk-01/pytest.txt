@@ -1,0 +1,16 @@
+FT-ORD-001 CHK-01
+
+Command:
+.venv/bin/pytest tests/handlers/test_cart.py -v --run-integration
+
+Result:
+- passed
+- environment notes:
+  - PostgreSQL container started with `sudo docker-compose up -d postgres`
+  - integration suite had to run outside sandbox against local Docker PostgreSQL
+
+Observed output:
+- 14 passed in 6.04s
+
+Verdict:
+- CHK-01 passed

@@ -4,10 +4,11 @@ from typing import List
 from app.models.category import Category
 from app.models.product import Product
 from app.models.product_attribute import ProductAttribute
+from app.ui_text import format_ui_text, get_ui_text
 
 
-EMPTY_DESCRIPTION_TEXT = "Описание отсутствует."
-EMPTY_ATTRIBUTES_TEXT = "Характеристики не указаны."
+EMPTY_DESCRIPTION_TEXT = get_ui_text("catalog", "empty_description")
+EMPTY_ATTRIBUTES_TEXT = get_ui_text("catalog", "empty_attributes")
 
 
 def format_price(price: Decimal) -> str:
@@ -15,14 +16,22 @@ def format_price(price: Decimal) -> str:
 
 
 def build_categories_text(categories: List[Category]) -> str:
-    lines = ["Выберите раздел:"]
+    lines = [get_ui_text("catalog", "categories_title")]
     lines.extend(category.name for category in categories)
     return "\n".join(lines)
 
 
 def build_products_text(category: Category, products: List[Product]) -> str:
-    lines = [f"{category.name}", "", "Товары:"]
-    lines.extend(f"{product.name} - {format_price(product.price)}" for product in products)
+    lines = [category.name, "", get_ui_text("catalog", "products_title")]
+    lines.extend(
+        format_ui_text(
+            "catalog",
+            "product_list_item",
+            name=product.name,
+            price=format_price(product.price),
+        )
+        for product in products
+    )
     return "\n".join(lines)
 
 
@@ -38,12 +47,11 @@ def build_product_text(product: Product, attributes: List[ProductAttribute]) -> 
     return "\n".join(
         [
             product.name,
-            f"Цена: {format_price(product.price)}",
+            format_ui_text("catalog", "price_label", price=format_price(product.price)),
             "",
-            f"Описание: {description}",
+            format_ui_text("catalog", "description_label", description=description),
             "",
-            "Характеристики:",
+            get_ui_text("catalog", "attributes_title"),
             attributes_text,
         ]
     )
-

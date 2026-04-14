@@ -1,0 +1,16 @@
+FT-ORD-001 CHK-02
+
+Command:
+.venv/bin/pytest tests/test_order_service.py tests/test_cart_service.py tests/test_database.py -v --run-integration
+
+Result:
+- passed
+- environment notes:
+  - PostgreSQL role `lynx` was granted `CREATEDB` inside the Docker test container
+  - suite rerun sequentially to avoid cross-process temporary-DB deadlocks
+
+Observed output:
+- 22 passed in 10.44s
+
+Verdict:
+- CHK-02 passed

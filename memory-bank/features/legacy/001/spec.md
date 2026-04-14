@@ -2,7 +2,7 @@
 
 ## Ссылка на brief
 
-- Источник: `memory-bank/features/001/brief.md`
+- Источник: `memory-bank/features/legacy/001/brief.md`
 
 ## Цель
 

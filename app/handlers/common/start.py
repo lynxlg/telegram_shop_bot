@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.keyboards.main_menu import get_main_menu_keyboard
 from app.models.user import User
+from app.ui_text import format_ui_text, get_ui_text
 
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ async def cmd_start(message: Message, db: AsyncSession) -> None:
 
     if telegram_user is None:
         logger.warning("Received /start without from_user payload")
-        await message.answer("Не удалось определить пользователя.")
+        await message.answer(get_ui_text("start", "missing_user"))
         return
 
     try:
@@ -53,7 +54,11 @@ async def cmd_start(message: Message, db: AsyncSession) -> None:
             logger.info("Updated last_activity for telegram_id=%s", telegram_user.id)
 
         await message.answer(
-            f"Добро пожаловать, {telegram_user.first_name}! Бот запущен.",
+            format_ui_text(
+                "start",
+                "welcome",
+                first_name=telegram_user.first_name,
+            ),
             reply_markup=get_main_menu_keyboard(),
         )
     except SQLAlchemyError:
@@ -63,5 +68,5 @@ async def cmd_start(message: Message, db: AsyncSession) -> None:
             telegram_user.id,
         )
         await message.answer(
-            "Не удалось сохранить ваши данные. Попробуйте еще раз позже."
+            get_ui_text("start", "save_error")
         )

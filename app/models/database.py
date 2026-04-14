@@ -110,6 +110,8 @@ async def init_db() -> None:
         import app.models.cart  # noqa: F401
         import app.models.cart_item  # noqa: F401
         import app.models.category  # noqa: F401
+        import app.models.order  # noqa: F401
+        import app.models.order_item  # noqa: F401
         import app.models.product  # noqa: F401
         import app.models.product_attribute  # noqa: F401
         import app.models.user  # noqa: F401

@@ -1,0 +1,20 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.3.4, pluggy-1.6.0 -- /home/lynx/telegram_shop_bot/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/lynx/telegram_shop_bot
+configfile: pytest.ini
+plugins: cov-6.0.0, mock-3.14.0, asyncio-0.23.8, anyio-4.13.0, env-1.1.5
+asyncio: mode=Mode.AUTO
+collecting ... collected 9 items
+
+tests/test_ui_texts.py::test_load_ui_texts_returns_dict PASSED           [ 11%]
+tests/test_ui_texts.py::test_get_ui_text_reads_nested_value PASSED       [ 22%]
+tests/test_ui_texts.py::test_format_ui_text_applies_placeholders PASSED  [ 33%]
+tests/test_ui_texts.py::test_get_ui_text_raises_for_missing_path PASSED  [ 44%]
+tests/test_ui_texts.py::test_main_menu_keyboard_uses_json_texts PASSED   [ 55%]
+tests/test_ui_texts.py::test_catalog_text_builders_preserve_existing_copy PASSED [ 66%]
+tests/test_ui_texts.py::test_cart_text_builder_preserves_existing_copy PASSED [ 77%]
+tests/test_ui_texts.py::test_keyboards_preserve_existing_button_copy PASSED [ 88%]
+tests/test_ui_texts.py::test_order_status_text_builder_maps_known_and_unknown_statuses PASSED [100%]
+
+============================== 9 passed in 0.04s ===============================

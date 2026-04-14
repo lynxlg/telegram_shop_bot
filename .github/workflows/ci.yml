@@ -50,6 +50,9 @@ jobs:
       - name: Lint Markdown
         run: npx --yes markdownlint-cli2 "**/*.md"
 
+      - name: Validate memory-bank
+        run: python3 scripts/validate_memory_bank.py
+
   smoke-bootstrap:
     name: Smoke (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
