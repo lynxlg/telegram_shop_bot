@@ -5,7 +5,6 @@ from app.models.cart_item import CartItem
 from app.services.order import CheckoutSummary
 from app.ui_text import format_ui_text, get_ui_text
 
-
 EMPTY_CART_TEXT = get_ui_text("cart", "empty")
 CHECKOUT_SUCCESS_TEXT = get_ui_text("checkout", "success")
 

@@ -13,7 +13,6 @@ from app.services.order_text import (
 )
 from app.ui_text import get_ui_text
 
-
 logger = logging.getLogger(__name__)
 router = Router()
 

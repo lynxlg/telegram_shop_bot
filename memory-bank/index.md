@@ -47,8 +47,8 @@ audience: humans_and_agents
   **Читать, чтобы:** зарегистрировать устойчивый пользовательский или операционный flow либо проверить, нужен ли для задачи отдельный use case.
 
 - [`ops/README.md`](ops/README.md)
-  **Что:** Индекс operational-документации репозитория: локальная разработка, конфигурация, окружения, релизы и runbooks. Служит точкой входа в runtime и deployment context проекта.
-  **Читать, чтобы:** подготовить окружение, проверить config expectations, понять ограничения non-local сред или найти operational runbook.
+  **Что:** Индекс operational-документации репозитория: локальная разработка, конфигурация, окружения, релизы и runbooks. Служит точкой входа в runtime и deployment context проекта, включая runbook по integration tests через Docker PostgreSQL.
+  **Читать, чтобы:** подготовить окружение, проверить config expectations, понять ограничения non-local сред или найти operational runbook по локальному PostgreSQL и verify.
 
 - [`engineering/README.md`](engineering/README.md)
   **Что:** Индекс engineering-правил репозитория: testing policy, coding style, git workflow и autonomy boundaries. Также фиксирует рабочий язык project-specific документации и агентского взаимодействия.

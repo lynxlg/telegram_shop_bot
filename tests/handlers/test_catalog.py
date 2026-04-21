@@ -3,18 +3,18 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.methods import SendMessage
 from aiogram.types import InputMediaPhoto
-from aiogram.exceptions import TelegramBadRequest
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.callbacks.catalog import (
     ADD_TO_CART_ACTION,
-    CatalogCallback,
     GO_BACK_ACTION,
     OPEN_CATEGORY_ACTION,
     OPEN_PRODUCT_ACTION,
+    CatalogCallback,
 )
 from app.handlers import catalog as catalog_module
 from app.handlers.catalog import add_to_cart, go_back, open_catalog, open_category, open_product
@@ -358,9 +358,7 @@ async def test_add_to_cart_creates_cart_item(db_session, callback_factory) -> No
 
     await add_to_cart(callback, callback_data, db_session)
 
-    result = await db_session.execute(
-        select(CartItem).where(CartItem.product_id == product.id)
-    )
+    result = await db_session.execute(select(CartItem).where(CartItem.product_id == product.id))
     cart_item = result.scalar_one()
     assert cart_item.quantity == 1
     callback.answer.assert_awaited_once_with("Товар добавлен в корзину.")

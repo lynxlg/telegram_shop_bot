@@ -10,7 +10,7 @@ derived_from:
   - ../../prd/PRD-001-order-lifecycle-and-operations.md
   - ../../use-cases/UC-004-check-active-order-status.md
 status: active
-delivery_status: in_progress
+delivery_status: done
 audience: humans_and_agents
 must_not_define:
   - implementation_sequence
@@ -128,7 +128,7 @@ Checkout уже создает заказ, но покупатель не мож
 ### Acceptance Scenarios
 
 - `SC-01` Пользователь после `/start` нажимает `Статус заказа` и получает список из нескольких активных заказов с корректными номерами и русскими статусами.
-- `SC-02` Один из активных заказов хранится со статусом `new`, и пользователь видит человекочитаемый статус `Принят`.
+- `SC-02` Один из активных заказов хранится со статусом `new`, и пользователь видит человекочитаемый статус `Создан`.
 - `SC-03` Пользователь без активных заказов получает сообщение об их отсутствии; завершенные и отмененные заказы в список не попадают.
 
 ### Negative Coverage

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -30,5 +32,5 @@ class CartItem(Base):
     )
     quantity: Mapped[int] = mapped_column(nullable=False, default=1)
 
-    cart: Mapped["Cart"] = relationship("Cart", back_populates="items")
-    product: Mapped["Product"] = relationship("Product", back_populates="cart_items")
+    cart: Mapped[Cart] = relationship("Cart", back_populates="items")
+    product: Mapped[Product] = relationship("Product", back_populates="cart_items")

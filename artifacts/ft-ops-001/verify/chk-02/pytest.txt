@@ -1,0 +1,21 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.3.4, pluggy-1.6.0 -- /home/lynx/telegram_shop_bot/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/lynx/telegram_shop_bot
+configfile: pytest.ini
+plugins: cov-6.0.0, mock-3.14.0, asyncio-0.23.8, anyio-4.13.0, env-1.1.5
+asyncio: mode=Mode.AUTO
+collecting ... collected 10 items
+
+tests/test_order_service.py::test_create_order_from_cart_persists_order_and_clears_cart PASSED [ 10%]
+tests/test_order_service.py::test_create_order_from_cart_raises_for_empty_cart PASSED [ 20%]
+tests/test_order_service.py::test_get_active_orders_by_telegram_id_returns_only_active_orders_for_current_user PASSED [ 30%]
+tests/test_order_service.py::test_get_active_orders_by_telegram_id_returns_empty_list_for_unknown_user PASSED [ 40%]
+tests/test_order_service.py::test_get_active_orders_for_operator_returns_only_non_terminal_orders PASSED [ 50%]
+tests/test_order_service.py::test_update_order_status_persists_new_status PASSED [ 60%]
+tests/test_order_service.py::test_update_order_status_returns_none_for_missing_order PASSED [ 70%]
+tests/test_order_service.py::test_update_order_status_rejects_unknown_status PASSED [ 80%]
+tests/test_order_service.py::test_normalize_phone_rejects_short_number PASSED [ 90%]
+tests/test_order_service.py::test_normalize_address_rejects_too_short_value PASSED [100%]
+
+============================== 10 passed in 4.09s ==============================

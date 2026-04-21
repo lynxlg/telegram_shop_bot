@@ -30,9 +30,7 @@ async def test_show_active_order_statuses_unit_happy_path(message_factory, monke
     await show_active_order_statuses(message, AsyncMock())
 
     message.answer.assert_awaited_once_with(
-        "Активные заказы:\n\n"
-        "1. ORD-900001 - Принят\n"
-        "2. ORD-900002 - Собран"
+        "Активные заказы:\n\n1. ORD-900001 - Создан\n2. ORD-900002 - Собран"
     )
 
 
@@ -111,7 +109,7 @@ async def test_show_active_order_statuses_lists_only_current_user_active_orders(
     message.answer.assert_awaited_once()
     response = message.answer.await_args.args[0]
     assert "Активные заказы:" in response
-    assert "ORD-000001 - Принят" in response
+    assert "ORD-000001 - Создан" in response
     assert "ORD-000002 - Передан в доставку" in response
     assert "ORD-000003" not in response
     assert "ORD-000004" not in response

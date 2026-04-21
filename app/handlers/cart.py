@@ -11,11 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.callbacks.cart import (
     CANCEL_CHECKOUT_ACTION,
     CONFIRM_ORDER_ACTION,
-    CartCallback,
     DECREASE_ACTION,
     INCREASE_ACTION,
     REMOVE_ACTION,
     START_CHECKOUT_ACTION,
+    CartCallback,
 )
 from app.keyboards.cart import (
     CHECKOUT_CANCEL_TEXT,
@@ -48,7 +48,6 @@ from app.services.order import (
 )
 from app.ui_text import get_ui_text
 
-
 logger = logging.getLogger(__name__)
 router = Router()
 
@@ -62,6 +61,7 @@ INVALID_ADDRESS_TEXT = get_ui_text("checkout", "invalid_address")
 CHECKOUT_CANCELLED_TEXT = get_ui_text("checkout", "cancelled")
 CART_BUTTON_TEXT = get_ui_text("main_menu", "cart_button")
 CHECKOUT_CANCELLED_CALLBACK_TEXT = get_ui_text("checkout", "cancelled_callback")
+CHECKOUT_MAIN_MENU_TEXT = get_ui_text("checkout", "main_menu_prompt")
 
 
 class CheckoutStates(StatesGroup):
@@ -76,6 +76,12 @@ async def _get_user_phone(db: AsyncSession, telegram_id: int) -> str | None:
     if user is None:
         return None
     return user.phone
+
+
+async def _get_user_role(db: AsyncSession, telegram_id: int) -> str:
+    result = await db.execute(select(User.role).where(User.telegram_id == telegram_id))
+    role = result.scalar_one_or_none()
+    return role or "user"
 
 
 async def _cancel_checkout(
@@ -160,7 +166,9 @@ async def start_checkout(
             )
         await callback.answer()
     except SQLAlchemyError:
-        logger.exception("Database error while starting checkout telegram_id=%s", callback.from_user.id)
+        logger.exception(
+            "Database error while starting checkout telegram_id=%s", callback.from_user.id
+        )
         if callback.message is not None:
             await callback.message.answer(CHECKOUT_ERROR_TEXT)
         await callback.answer()
@@ -303,9 +311,17 @@ async def confirm_checkout(
             phone=phone,
             shipping_address=shipping_address,
         )
+        role = await _get_user_role(db, callback.from_user.id)
         await state.clear()
         if callback.message is not None:
-            await callback.message.edit_text(format_order_created_text(order.order_number))
+            await callback.message.edit_text(
+                format_order_created_text(order.order_number),
+                reply_markup=None,
+            )
+            await callback.message.answer(
+                CHECKOUT_MAIN_MENU_TEXT,
+                reply_markup=get_main_menu_keyboard(role),
+            )
         await callback.answer()
     except EmptyCartError:
         await state.clear()
@@ -318,7 +334,9 @@ async def confirm_checkout(
             await callback.message.edit_text(CHECKOUT_ERROR_TEXT)
         await callback.answer()
     except SQLAlchemyError:
-        logger.exception("Database error while confirming checkout telegram_id=%s", callback.from_user.id)
+        logger.exception(
+            "Database error while confirming checkout telegram_id=%s", callback.from_user.id
+        )
         if callback.message is not None:
             await callback.message.edit_text(CHECKOUT_ERROR_TEXT)
         await callback.answer()
@@ -355,7 +373,9 @@ async def increase_item(
 
         await _update_cart_view(callback, db, callback.from_user.id)
     except SQLAlchemyError:
-        logger.exception("Database error while increasing cart_item_id=%s", callback_data.cart_item_id)
+        logger.exception(
+            "Database error while increasing cart_item_id=%s", callback_data.cart_item_id
+        )
         if callback.message is not None:
             await callback.message.edit_text(CART_UPDATE_ERROR_TEXT)
         await callback.answer()
@@ -370,8 +390,10 @@ async def decrease_item(
     try:
         result = await decrease_cart_item_quantity(db, callback_data.cart_item_id)
         cart = await get_cart_by_telegram_id(db, callback.from_user.id)
-        if result is None and cart is not None and all(
-            item.id != callback_data.cart_item_id for item in cart.items
+        if (
+            result is None
+            and cart is not None
+            and all(item.id != callback_data.cart_item_id for item in cart.items)
         ):
             await _update_cart_view(callback, db, callback.from_user.id)
             return
@@ -388,7 +410,9 @@ async def decrease_item(
 
         await _update_cart_view(callback, db, callback.from_user.id)
     except SQLAlchemyError:
-        logger.exception("Database error while decreasing cart_item_id=%s", callback_data.cart_item_id)
+        logger.exception(
+            "Database error while decreasing cart_item_id=%s", callback_data.cart_item_id
+        )
         if callback.message is not None:
             await callback.message.edit_text(CART_UPDATE_ERROR_TEXT)
         await callback.answer()
@@ -410,7 +434,9 @@ async def remove_item(
 
         await _update_cart_view(callback, db, callback.from_user.id)
     except SQLAlchemyError:
-        logger.exception("Database error while removing cart_item_id=%s", callback_data.cart_item_id)
+        logger.exception(
+            "Database error while removing cart_item_id=%s", callback_data.cart_item_id
+        )
         if callback.message is not None:
             await callback.message.edit_text(CART_UPDATE_ERROR_TEXT)
         await callback.answer()

@@ -10,15 +10,14 @@ from aiogram.types import (
 from app.callbacks.cart import (
     CANCEL_CHECKOUT_ACTION,
     CONFIRM_ORDER_ACTION,
-    CartCallback,
     DECREASE_ACTION,
     INCREASE_ACTION,
     REMOVE_ACTION,
     START_CHECKOUT_ACTION,
+    CartCallback,
 )
 from app.models.cart_item import CartItem
 from app.ui_text import format_ui_text, get_ui_text
-
 
 CHECKOUT_CANCEL_TEXT = get_ui_text("checkout", "cancel_checkout_button")
 

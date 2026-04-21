@@ -11,4 +11,6 @@ fi
 
 export PYTHONPATH="${ROOT_DIR}:${PYTHONPATH:-}"
 
+ruff format .
+ruff check .
 pytest tests/ -v --cov=app --cov-report=term-missing

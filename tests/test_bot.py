@@ -1,6 +1,6 @@
+import pytest
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
-import pytest
 
 from app.bot import create_bot, create_dispatcher
 

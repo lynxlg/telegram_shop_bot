@@ -4,8 +4,8 @@ from aiogram.enums import ParseMode
 
 from app.config import get_settings
 
-
 settings = get_settings()
+
 
 def create_bot() -> Bot:
     return Bot(

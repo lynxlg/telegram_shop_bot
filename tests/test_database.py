@@ -4,12 +4,12 @@ import pytest
 from sqlalchemy import inspect, select, text
 from sqlalchemy.exc import IntegrityError
 
-from app.models.product import Product
 from app.models.cart import Cart
 from app.models.cart_item import CartItem
 from app.models.category import Category
 from app.models.order import Order
 from app.models.order_item import OrderItem
+from app.models.product import Product
 from app.models.user import User
 
 
@@ -62,9 +62,7 @@ async def test_user_persist_and_load(db_session) -> None:
     db_session.add(user)
     await db_session.commit()
 
-    result = await db_session.execute(
-        select(User).where(User.telegram_id == 777000)
-    )
+    result = await db_session.execute(select(User).where(User.telegram_id == 777000))
     saved_user = result.scalar_one()
 
     assert saved_user.username == "persisted_user"

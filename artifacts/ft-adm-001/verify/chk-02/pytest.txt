@@ -1,0 +1,24 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.3.4, pluggy-1.6.0 -- /home/lynx/telegram_shop_bot/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/lynx/telegram_shop_bot
+configfile: pytest.ini
+plugins: cov-6.0.0, mock-3.14.0, asyncio-0.23.8, anyio-4.13.0, env-1.1.5
+asyncio: mode=Mode.AUTO
+collecting ... collected 13 items
+
+tests/test_catalog_admin_service.py::test_create_and_rename_category PASSED [  7%]
+tests/test_catalog_admin_service.py::test_create_subcategory_blocked_when_parent_has_products PASSED [ 15%]
+tests/test_catalog_admin_service.py::test_delete_category_rejects_non_empty_category PASSED [ 23%]
+tests/test_catalog_admin_service.py::test_product_crud_flow_updates_existing_fields PASSED [ 30%]
+tests/test_catalog_admin_service.py::test_create_product_requires_leaf_category PASSED [ 38%]
+tests/test_catalog_service.py::test_get_root_categories_returns_only_root_sorted PASSED [ 46%]
+tests/test_catalog_service.py::test_get_category_by_id_returns_category PASSED [ 53%]
+tests/test_catalog_service.py::test_get_child_categories_returns_sorted_children PASSED [ 61%]
+tests/test_catalog_service.py::test_get_child_categories_returns_empty_for_leaf PASSED [ 69%]
+tests/test_catalog_service.py::test_get_active_products_by_category_filters_inactive PASSED [ 76%]
+tests/test_catalog_service.py::test_get_product_by_id_returns_product PASSED [ 84%]
+tests/test_catalog_service.py::test_get_product_by_id_returns_image_url PASSED [ 92%]
+tests/test_catalog_service.py::test_get_product_attributes_returns_sorted_attributes PASSED [100%]
+
+============================== 13 passed in 7.19s ==============================

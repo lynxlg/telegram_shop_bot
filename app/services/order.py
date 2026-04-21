@@ -1,7 +1,7 @@
 import logging
+import re
 from dataclasses import dataclass
 from decimal import Decimal
-import re
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -14,12 +14,19 @@ from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.user import User
 
-
 logger = logging.getLogger(__name__)
 
 MIN_PHONE_DIGITS = 10
 MIN_ADDRESS_LENGTH = 5
 ORDER_NUMBER_PREFIX = "ORD-"
+CANONICAL_ORDER_STATUSES = (
+    "new",
+    "paid",
+    "assembling",
+    "delivering",
+    "completed",
+    "cancelled",
+)
 TERMINAL_ORDER_STATUSES = ("completed", "cancelled")
 
 
@@ -36,6 +43,10 @@ class InvalidPhoneError(OrderCreationError):
 
 
 class InvalidAddressError(OrderCreationError):
+    pass
+
+
+class InvalidOrderStatusError(ValueError):
     pass
 
 
@@ -83,6 +94,23 @@ def _build_order_number(order_id: int) -> str:
     return f"{ORDER_NUMBER_PREFIX}{order_id:06d}"
 
 
+async def get_active_orders_for_operator(session: AsyncSession) -> list[Order]:
+    result = await session.execute(
+        select(Order)
+        .options(selectinload(Order.user))
+        .where(Order.status.not_in(TERMINAL_ORDER_STATUSES))
+        .order_by(Order.created_at.desc(), Order.id.desc())
+    )
+    return list(result.scalars().all())
+
+
+async def get_order_by_id(session: AsyncSession, order_id: int) -> Order | None:
+    result = await session.execute(
+        select(Order).options(selectinload(Order.user)).where(Order.id == order_id)
+    )
+    return result.scalar_one_or_none()
+
+
 async def get_active_orders_by_telegram_id(
     session: AsyncSession,
     telegram_id: int,
@@ -95,6 +123,28 @@ async def get_active_orders_by_telegram_id(
         .order_by(Order.created_at.desc(), Order.id.desc())
     )
     return list(result.scalars().all())
+
+
+async def update_order_status(
+    session: AsyncSession,
+    order_id: int,
+    status: str,
+) -> Order | None:
+    if status not in CANONICAL_ORDER_STATUSES:
+        raise InvalidOrderStatusError(status)
+
+    try:
+        order = await get_order_by_id(session, order_id)
+        if order is None:
+            return None
+
+        order.status = status
+        await session.commit()
+        return await get_order_by_id(session, order_id)
+    except SQLAlchemyError:
+        await session.rollback()
+        logger.exception("Failed to update order status order_id=%s status=%s", order_id, status)
+        raise
 
 
 async def create_order_from_cart(

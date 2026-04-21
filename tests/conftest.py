@@ -1,8 +1,8 @@
 from pathlib import Path
 from types import SimpleNamespace
 from typing import AsyncGenerator, Callable, Optional
-from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from unittest.mock import AsyncMock
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import pytest
 import pytest_asyncio
@@ -17,19 +17,18 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from app.handlers.catalog import router as catalog_router
+from app.handlers.admin_catalog import router as admin_catalog_router
 from app.handlers.cart import router as cart_router
+from app.handlers.catalog import router as catalog_router
 from app.handlers.common.start import router as start_router
+from app.handlers.operator_orders import router as operator_orders_router
 from app.handlers.order_status import router as order_status_router
 from app.models.cart import Cart
 from app.models.cart_item import CartItem
 from app.models.category import Category
 from app.models.database import Base
-from app.models.order import Order
-from app.models.order_item import OrderItem
 from app.models.product import Product
 from app.models.product_attribute import ProductAttribute
-
 
 TEST_ENV_FILE = Path(__file__).resolve().parent / ".env.test"
 INTEGRATION_FIXTURES = {"db_session", "test_engine", "test_session_factory"}
@@ -45,9 +44,7 @@ def _normalize_asyncpg_database_url(database_url: str) -> str:
     query = dict(parse_qsl(parts.query, keep_blank_values=True))
     query.pop("connect_timeout", None)
     query.pop("timeout", None)
-    return urlunsplit(
-        (parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment)
-    )
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 
 def pytest_addoption(parser) -> None:
@@ -61,9 +58,7 @@ def pytest_addoption(parser) -> None:
 
 def pytest_collection_modifyitems(config, items) -> None:
     run_integration = config.getoption("--run-integration")
-    skip_integration = pytest.mark.skip(
-        reason="integration tests skipped; use --run-integration"
-    )
+    skip_integration = pytest.mark.skip(reason="integration tests skipped; use --run-integration")
 
     for item in items:
         fixture_names = set(getattr(item, "fixturenames", ()))
@@ -79,6 +74,7 @@ def pytest_collection_modifyitems(config, items) -> None:
 @pytest.fixture(scope="session")
 def test_settings():
     from app.config import Settings
+
     values: dict[str, str] = {}
     for line in TEST_ENV_FILE.read_text(encoding="utf-8").splitlines():
         stripped = line.strip()
@@ -110,9 +106,7 @@ async def test_engine(test_settings) -> AsyncGenerator[AsyncEngine, None]:
     try:
         async with admin_engine.connect() as connection:
             result = await connection.execute(
-                text(
-                    "SELECT 1 FROM pg_database WHERE datname = :database_name"
-                ),
+                text("SELECT 1 FROM pg_database WHERE datname = :database_name"),
                 {"database_name": database_name},
             )
             database_exists = result.scalar_one_or_none() is not None
@@ -122,8 +116,7 @@ async def test_engine(test_settings) -> AsyncGenerator[AsyncEngine, None]:
     except Exception as exc:
         await admin_engine.dispose()
         pytest.skip(
-            "Не удалось создать отдельную тестовую БД PostgreSQL: "
-            f"{type(exc).__name__}: {exc}"
+            f"Не удалось создать отдельную тестовую БД PostgreSQL: {type(exc).__name__}: {exc}"
         )
     finally:
         await admin_engine.dispose()
@@ -141,10 +134,7 @@ async def test_engine(test_settings) -> AsyncGenerator[AsyncEngine, None]:
             await connection.run_sync(Base.metadata.create_all)
     except Exception as exc:
         await engine.dispose()
-        pytest.skip(
-            "PostgreSQL недоступен для интеграционных тестов: "
-            f"{type(exc).__name__}: {exc}"
-        )
+        pytest.skip(f"PostgreSQL недоступен для интеграционных тестов: {type(exc).__name__}: {exc}")
 
     try:
         yield engine
@@ -187,7 +177,9 @@ def test_session_factory(test_engine: AsyncEngine):
 
 
 @pytest_asyncio.fixture
-async def db_session(test_engine: AsyncEngine, test_session_factory) -> AsyncGenerator[AsyncSession, None]:
+async def db_session(
+    test_engine: AsyncEngine, test_session_factory
+) -> AsyncGenerator[AsyncSession, None]:
     session = test_session_factory()
 
     try:
@@ -217,6 +209,8 @@ def dp() -> Dispatcher:
     dispatcher.include_router(catalog_router)
     dispatcher.include_router(cart_router)
     dispatcher.include_router(order_status_router)
+    dispatcher.include_router(operator_orders_router)
+    dispatcher.include_router(admin_catalog_router)
     return dispatcher
 
 

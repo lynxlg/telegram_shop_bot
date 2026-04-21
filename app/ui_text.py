@@ -3,7 +3,6 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-
 _UI_TEXTS_PATH = Path(__file__).with_name("ui_texts.json")
 
 

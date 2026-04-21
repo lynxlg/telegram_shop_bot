@@ -6,7 +6,6 @@ from app.models.product import Product
 from app.models.product_attribute import ProductAttribute
 from app.ui_text import format_ui_text, get_ui_text
 
-
 EMPTY_DESCRIPTION_TEXT = get_ui_text("catalog", "empty_description")
 EMPTY_ATTRIBUTES_TEXT = get_ui_text("catalog", "empty_attributes")
 

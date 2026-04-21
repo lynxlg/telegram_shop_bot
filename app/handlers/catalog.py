@@ -11,10 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.callbacks.catalog import (
     ADD_TO_CART_ACTION,
-    CatalogCallback,
     GO_BACK_ACTION,
     OPEN_CATEGORY_ACTION,
     OPEN_PRODUCT_ACTION,
+    CatalogCallback,
 )
 from app.keyboards.catalog import (
     build_child_categories_keyboard,
@@ -24,6 +24,7 @@ from app.keyboards.catalog import (
 )
 from app.models.category import Category
 from app.models.user import User
+from app.services.cart import add_product_to_cart
 from app.services.catalog import (
     get_active_products_by_category,
     get_category_by_id,
@@ -32,14 +33,12 @@ from app.services.catalog import (
     get_product_by_id,
     get_root_categories,
 )
-from app.services.cart import add_product_to_cart
 from app.services.catalog_text import (
     build_categories_text,
     build_product_text,
     build_products_text,
 )
 from app.ui_text import get_ui_text
-
 
 logger = logging.getLogger(__name__)
 router = Router()

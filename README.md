@@ -13,6 +13,8 @@
 ## Запуск тестов
 
 ```bash
+.venv/bin/ruff format .
+.venv/bin/ruff check .
 .venv/bin/pytest tests/ -v -m unit
 ```
 
@@ -25,7 +27,21 @@ docker-compose up -d postgres
 Полный прогон тестов с PostgreSQL:
 
 ```bash
+.venv/bin/ruff format .
+.venv/bin/ruff check .
 .venv/bin/pytest tests/ -v --run-integration
+```
+
+Полный локальный verify с lint перед тестами:
+
+```bash
+./scripts/run-tests.sh
+```
+
+Установить git hooks для автоматического запуска перед коммитом:
+
+```bash
+.venv/bin/pre-commit install
 ```
 
 Контейнерная PostgreSQL для тестов публикуется на `localhost:55432`.

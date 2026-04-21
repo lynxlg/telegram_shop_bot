@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from decimal import Decimal
 from typing import Optional
 
@@ -32,4 +34,4 @@ class OrderItem(Base):
     quantity: Mapped[int] = mapped_column(nullable=False)
     line_total: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
 
-    order: Mapped["Order"] = relationship("Order", back_populates="items")
+    order: Mapped[Order] = relationship("Order", back_populates="items")

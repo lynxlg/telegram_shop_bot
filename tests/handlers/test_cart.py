@@ -6,13 +6,10 @@ import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.callbacks.cart import (
-    CANCEL_CHECKOUT_ACTION,
-    CONFIRM_ORDER_ACTION,
-    CartCallback,
     DECREASE_ACTION,
     INCREASE_ACTION,
     REMOVE_ACTION,
-    START_CHECKOUT_ACTION,
+    CartCallback,
 )
 from app.handlers import cart as cart_module
 from app.handlers.cart import (
@@ -26,6 +23,7 @@ from app.handlers.cart import (
     remove_item,
     start_checkout,
 )
+from app.keyboards.main_menu import get_main_menu_keyboard
 from app.models.cart import Cart
 from app.models.cart_item import CartItem
 from app.models.category import Category
@@ -96,7 +94,9 @@ async def test_increase_item_updates_cart(db_session, callback_factory) -> None:
 
 
 @pytest.mark.asyncio
-async def test_decrease_item_removes_last_position_and_shows_empty(db_session, callback_factory) -> None:
+async def test_decrease_item_removes_last_position_and_shows_empty(
+    db_session, callback_factory
+) -> None:
     user, cart_item = await _seed_cart(db_session)
     callback = callback_factory()
     callback.from_user = SimpleNamespace(id=user.telegram_id)
@@ -174,7 +174,6 @@ async def test_start_checkout_requests_phone(db_session, callback_factory) -> No
     callback = callback_factory()
     callback.from_user = SimpleNamespace(id=user.telegram_id)
     state = AsyncMock()
-    callback_data = CartCallback(action=START_CHECKOUT_ACTION)
 
     await start_checkout(callback, state, db_session)
 
@@ -232,13 +231,18 @@ async def test_confirm_checkout_creates_order(db_session, callback_factory) -> N
         "phone": "+79991234567",
         "shipping_address": "Москва, Тверская 1",
     }
-    callback_data = CartCallback(action=CONFIRM_ORDER_ACTION)
 
     await confirm_checkout(callback, state, db_session)
 
     state.clear.assert_awaited_once()
-    callback.message.edit_text.assert_awaited_once()
-    assert "Номер заказа: ORD-000001" in callback.message.edit_text.await_args.args[0]
+    callback.message.edit_text.assert_awaited_once_with(
+        "Заказ оформлен.\nНомер заказа: ORD-000001",
+        reply_markup=None,
+    )
+    callback.message.answer.assert_awaited_once_with(
+        "Выберите действие в главном меню.",
+        reply_markup=get_main_menu_keyboard(),
+    )
 
 
 @pytest.mark.asyncio
@@ -257,12 +261,18 @@ async def test_confirm_checkout_success_unit(callback_factory, monkeypatch) -> N
         return SimpleNamespace(order_number="ORD-000321")
 
     monkeypatch.setattr(cart_module, "create_order_from_cart", fake_create_order)
+    monkeypatch.setattr(cart_module, "_get_user_role", AsyncMock(return_value="user"))
 
     await confirm_checkout(callback, state, AsyncMock())
 
     state.clear.assert_awaited_once()
     callback.message.edit_text.assert_awaited_once_with(
-        "Заказ оформлен.\nНомер заказа: ORD-000321"
+        "Заказ оформлен.\nНомер заказа: ORD-000321",
+        reply_markup=None,
+    )
+    callback.message.answer.assert_awaited_once_with(
+        "Выберите действие в главном меню.",
+        reply_markup=get_main_menu_keyboard(),
     )
 
 
@@ -272,7 +282,6 @@ async def test_cancel_checkout_by_callback_restores_cart(db_session, callback_fa
     callback = callback_factory()
     callback.from_user = SimpleNamespace(id=user.telegram_id)
     state = AsyncMock()
-    callback_data = CartCallback(action=CANCEL_CHECKOUT_ACTION)
 
     await cancel_checkout_by_callback(callback, state, db_session)
 

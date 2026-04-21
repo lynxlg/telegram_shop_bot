@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from sqlalchemy import func, select
-from sqlalchemy.exc import SQLAlchemyError
 
 from app.handlers.common.start import cmd_start
 from app.models.user import User
@@ -16,9 +15,7 @@ async def test_start_registers_new_user(db_session, message_factory) -> None:
 
     await cmd_start(message, db_session)
 
-    result = await db_session.execute(
-        select(User).where(User.telegram_id == message.from_user.id)
-    )
+    result = await db_session.execute(select(User).where(User.telegram_id == message.from_user.id))
     user = result.scalar_one()
 
     assert user.username == "test_user"
@@ -30,6 +27,7 @@ async def test_start_registers_new_user(db_session, message_factory) -> None:
     assert reply_markup.keyboard[0][0].text == "Каталог"
     assert reply_markup.keyboard[0][1].text == "Корзина"
     assert reply_markup.keyboard[1][0].text == "Статус заказа"
+    assert len(reply_markup.keyboard) == 2
 
 
 @pytest.mark.asyncio
@@ -52,15 +50,59 @@ async def test_start_updates_existing_user_without_duplicates(db_session, messag
     count_result = await db_session.execute(
         select(func.count()).select_from(User).where(User.telegram_id == 123456789)
     )
-    user_result = await db_session.execute(
-        select(User).where(User.telegram_id == 123456789)
-    )
+    user_result = await db_session.execute(select(User).where(User.telegram_id == 123456789))
     updated_user = user_result.scalar_one()
 
     assert count_result.scalar_one() == 1
     assert updated_user.username == "new_user"
     assert updated_user.first_name == "New"
     assert updated_user.last_activity > old_time
+
+
+@pytest.mark.asyncio
+async def test_start_shows_operator_orders_button_for_operator_role(
+    db_session,
+    message_factory,
+) -> None:
+    existing_user = User(
+        telegram_id=424242,
+        username="operator_user",
+        first_name="Op",
+        last_name="Erator",
+        role="operator",
+    )
+    db_session.add(existing_user)
+    await db_session.commit()
+    message = message_factory(telegram_id=424242, username="operator_user", first_name="Op")
+
+    await cmd_start(message, db_session)
+
+    reply_markup = message.answer.await_args.kwargs["reply_markup"]
+    assert reply_markup.keyboard[2][0].text == "Заказы"
+    assert len(reply_markup.keyboard) == 3
+
+
+@pytest.mark.asyncio
+async def test_start_shows_admin_catalog_button_for_admin_role(
+    db_session,
+    message_factory,
+) -> None:
+    existing_user = User(
+        telegram_id=525252,
+        username="admin_user",
+        first_name="Admin",
+        last_name="User",
+        role="admin",
+    )
+    db_session.add(existing_user)
+    await db_session.commit()
+    message = message_factory(telegram_id=525252, username="admin_user", first_name="Admin")
+
+    await cmd_start(message, db_session)
+
+    reply_markup = message.answer.await_args.kwargs["reply_markup"]
+    assert reply_markup.keyboard[2][0].text == "Заказы"
+    assert reply_markup.keyboard[3][0].text == "Админ каталог"
 
 
 @pytest.mark.asyncio

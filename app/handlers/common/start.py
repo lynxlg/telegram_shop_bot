@@ -12,7 +12,6 @@ from app.keyboards.main_menu import get_main_menu_keyboard
 from app.models.user import User
 from app.ui_text import format_ui_text, get_ui_text
 
-
 logger = logging.getLogger(__name__)
 router = Router()
 
@@ -27,9 +26,7 @@ async def cmd_start(message: Message, db: AsyncSession) -> None:
         return
 
     try:
-        result = await db.execute(
-            select(User).where(User.telegram_id == telegram_user.id)
-        )
+        result = await db.execute(select(User).where(User.telegram_id == telegram_user.id))
         user = result.scalar_one_or_none()
         now = datetime.now(timezone.utc)
 
@@ -59,7 +56,7 @@ async def cmd_start(message: Message, db: AsyncSession) -> None:
                 "welcome",
                 first_name=telegram_user.first_name,
             ),
-            reply_markup=get_main_menu_keyboard(),
+            reply_markup=get_main_menu_keyboard(user.role),
         )
     except SQLAlchemyError:
         await db.rollback()
@@ -67,6 +64,4 @@ async def cmd_start(message: Message, db: AsyncSession) -> None:
             "Database error while processing /start for telegram_id=%s",
             telegram_user.id,
         )
-        await message.answer(
-            get_ui_text("start", "save_error")
-        )
+        await message.answer(get_ui_text("start", "save_error"))

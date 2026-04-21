@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from decimal import Decimal
 from typing import List, Optional
 
@@ -27,13 +29,13 @@ class Product(Base):
     image_url: Mapped[Optional[str]] = mapped_column(String(2048), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
 
-    category: Mapped["Category"] = relationship("Category")
-    attributes: Mapped[List["ProductAttribute"]] = relationship(
+    category: Mapped[Category] = relationship("Category")
+    attributes: Mapped[List[ProductAttribute]] = relationship(
         "ProductAttribute",
         back_populates="product",
         cascade="all, delete-orphan",
     )
-    cart_items: Mapped[List["CartItem"]] = relationship(
+    cart_items: Mapped[List[CartItem]] = relationship(
         "CartItem",
         back_populates="product",
         cascade="all, delete-orphan",

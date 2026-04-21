@@ -34,6 +34,8 @@ Use case нужен для сценария, который живет на ур
 - [`UC-002-manage-cart.md`](UC-002-manage-cart.md) — actor: покупатель; upstream PRD: `none`; downstream features: `legacy/003`.
 - [`UC-003-checkout-and-create-order.md`](UC-003-checkout-and-create-order.md) — actor: покупатель; upstream PRD: `PRD-001`; downstream features: `FT-ORD-001`.
 - [`UC-004-check-active-order-status.md`](UC-004-check-active-order-status.md) — actor: покупатель; upstream PRD: `PRD-001`; downstream features: `FT-TRK-001`.
+- [`UC-005-manage-order-status.md`](UC-005-manage-order-status.md) — actor: оператор/администратор; upstream PRD: `PRD-001`; downstream features: `FT-OPS-001`.
+- [`UC-006-manage-catalog.md`](UC-006-manage-catalog.md) — actor: администратор; upstream PRD: `PRD-001`; downstream features: `FT-ADM-001`.
 
 ## Naming
 

@@ -8,15 +8,12 @@ from app.models.category import Category
 from app.models.product import Product
 from app.models.product_attribute import ProductAttribute
 
-
 logger = logging.getLogger(__name__)
 
 
 async def get_root_categories(session: AsyncSession) -> List[Category]:
     statement: Select[tuple[Category]] = (
-        select(Category)
-        .where(Category.parent_id.is_(None))
-        .order_by(Category.name.asc())
+        select(Category).where(Category.parent_id.is_(None)).order_by(Category.name.asc())
     )
     result = await session.execute(statement)
     return list(result.scalars().all())
@@ -30,9 +27,7 @@ async def get_category_by_id(session: AsyncSession, category_id: int) -> Optiona
 
 async def get_child_categories(session: AsyncSession, category_id: int) -> List[Category]:
     statement: Select[tuple[Category]] = (
-        select(Category)
-        .where(Category.parent_id == category_id)
-        .order_by(Category.name.asc())
+        select(Category).where(Category.parent_id == category_id).order_by(Category.name.asc())
     )
     result = await session.execute(statement)
     return list(result.scalars().all())
@@ -62,4 +57,3 @@ async def get_product_attributes(session: AsyncSession, product_id: int) -> List
     )
     result = await session.execute(statement)
     return list(result.scalars().all())
-

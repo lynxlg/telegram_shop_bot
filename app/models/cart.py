@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime
 
 from sqlalchemy import BigInteger, DateTime, ForeignKey, UniqueConstraint, func
@@ -27,8 +29,8 @@ class Cart(Base):
         server_default=func.now(),
     )
 
-    user: Mapped["User"] = relationship("User", back_populates="cart")
-    items: Mapped[list["CartItem"]] = relationship(
+    user: Mapped[User] = relationship("User", back_populates="cart")
+    items: Mapped[list[CartItem]] = relationship(
         "CartItem",
         back_populates="cart",
         cascade="all, delete-orphan",

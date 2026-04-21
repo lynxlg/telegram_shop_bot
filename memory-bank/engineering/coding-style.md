@@ -20,9 +20,10 @@ audience: humans_and_agents
 
 ## Tooling Contract
 
-- Отдельный formatter/linter для Python в репозитории пока не зафиксирован. Canonical baseline — PEP 8-совместимый стиль, читаемые импорты, типы там, где они уже используются, и прохождение существующих тестов.
+- Python formatter/linter для репозитория зафиксирован: `ruff` с конфигурацией в `pyproject.toml`. Canonical commands — `.venv/bin/ruff format .` и `.venv/bin/ruff check .`.
+- `ruff format` и `ruff check` должны проходить раньше Python test suites. Canonical full verify command — `./scripts/run-tests.sh`, где format/lint запускаются перед `pytest`.
 - Для shell-скриптов canonical tooling уже есть в CI: `shfmt` и `shellcheck`. Любое изменение в `init.sh` или `scripts/*.sh` должно оставаться совместимым с этими проверками.
-- Если в репозитории позже появятся `ruff`, `black` или pre-commit hooks, этот документ должен стать canonical owner новых правил вместо локальных договорённостей "по привычке".
+- Для локального pre-commit enforcement используется `.pre-commit-config.yaml`; canonical install command — `.venv/bin/pre-commit install`.
 
 ## Python Backend
 

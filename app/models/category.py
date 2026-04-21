@@ -32,4 +32,3 @@ class Category(Base):
         back_populates="parent",
         cascade="all, delete-orphan",
     )
-

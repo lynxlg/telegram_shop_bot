@@ -1,0 +1,29 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.3.4, pluggy-1.6.0 -- /home/lynx/telegram_shop_bot/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/lynx/telegram_shop_bot
+configfile: pytest.ini
+plugins: cov-6.0.0, mock-3.14.0, asyncio-0.23.8, anyio-4.13.0, env-1.1.5
+asyncio: mode=Mode.AUTO
+collecting ... collected 18 items
+
+tests/handlers/test_start.py::test_start_registers_new_user PASSED       [  5%]
+tests/handlers/test_start.py::test_start_updates_existing_user_without_duplicates PASSED [ 11%]
+tests/handlers/test_start.py::test_start_shows_operator_orders_button_for_operator_role PASSED [ 16%]
+tests/handlers/test_start.py::test_start_saves_all_user_fields PASSED    [ 22%]
+tests/handlers/test_start.py::test_start_updates_last_activity_on_repeat PASSED [ 27%]
+tests/handlers/test_start.py::test_start_handles_database_error PASSED   [ 33%]
+tests/handlers/test_start.py::test_start_handles_missing_from_user PASSED [ 38%]
+tests/handlers/test_start.py::test_start_updates_existing_user_unit PASSED [ 44%]
+tests/handlers/test_operator_orders.py::test_show_operator_orders_unit_access_denied PASSED [ 50%]
+tests/handlers/test_operator_orders.py::test_show_operator_orders_unit_happy_path PASSED [ 55%]
+tests/handlers/test_operator_orders.py::test_change_operator_order_status_unit_happy_path PASSED [ 61%]
+tests/handlers/test_operator_orders.py::test_show_operator_orders_denies_regular_user PASSED [ 66%]
+tests/handlers/test_operator_orders.py::test_show_operator_orders_lists_active_orders_for_operator PASSED [ 72%]
+tests/handlers/test_operator_orders.py::test_open_operator_order_shows_details_and_status_buttons PASSED [ 77%]
+tests/handlers/test_operator_orders.py::test_change_operator_order_status_updates_order PASSED [ 83%]
+tests/handlers/test_operator_orders.py::test_back_to_operator_orders_hides_terminal_order_after_update PASSED [ 88%]
+tests/handlers/test_operator_orders.py::test_operator_callbacks_denied_for_regular_user PASSED [ 94%]
+tests/handlers/test_operator_orders.py::test_show_operator_orders_handles_database_error PASSED [100%]
+
+============================== 18 passed in 9.65s ==============================

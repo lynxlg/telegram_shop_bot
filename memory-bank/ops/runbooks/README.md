@@ -11,13 +11,11 @@ audience: humans_and_agents
 
 # Runbooks Index
 
-В этом каталоге должны жить runbooks для повторяемых operational задач и инцидентов этого проекта.
+В этом каталоге живут runbooks для повторяемых operational задач и инцидентов этого проекта.
 
-Сейчас каталог не содержит project-specific runbooks. Это означает:
+## Current Runbooks
 
-- повторяемые локальные действия пока документируются в [../development.md](../development.md);
-- non-local operational процедуры ещё не оформлены и не должны подразумеваться по умолчанию;
-- при появлении первой повторяемой операции или инцидентного сценария нужно завести отдельный runbook и добавить ссылку сюда.
+- [PostgreSQL Integration Tests Via Docker](postgres-integration-tests.md) — как прогонять `pytest --run-integration` через Docker PostgreSQL, что делать при sandbox/socket проблемах и почему evidence-команды нужно запускать последовательно.
 
 Каждый runbook должен отвечать на вопросы:
 
@@ -38,11 +36,10 @@ audience: humans_and_agents
 6. Rollback
 7. Escalation
 
-## First Candidates
+## Next Candidates
 
 Когда в проекте появится необходимость, логично завести runbooks для:
 
-- локального поднятия PostgreSQL и восстановления тестового контура;
 - ручного seed каталога через `scripts/seed_catalog.sql`;
 - диагностики падения бота при старте из-за `BOT_TOKEN` или `DATABASE_URL`;
 - будущего non-local deploy / rollback, если такой процесс будет оформлен.

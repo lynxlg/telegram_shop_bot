@@ -5,15 +5,14 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from app.callbacks.catalog import (
     ADD_TO_CART_ACTION,
-    CatalogCallback,
     GO_BACK_ACTION,
     OPEN_CATEGORY_ACTION,
     OPEN_PRODUCT_ACTION,
+    CatalogCallback,
 )
 from app.models.category import Category
 from app.models.product import Product
 from app.ui_text import format_ui_text, get_ui_text
-
 
 BACK_BUTTON_TEXT = get_ui_text("catalog", "back_button")
 ADD_TO_CART_BUTTON_TEXT = get_ui_text("catalog", "add_to_cart_button")

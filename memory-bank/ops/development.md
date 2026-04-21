@@ -42,6 +42,8 @@ Canonical команды проекта:
 
 ```bash
 .venv/bin/python -m app.main
+.venv/bin/ruff format .
+.venv/bin/ruff check .
 .venv/bin/pytest tests/ -v -m unit
 .venv/bin/pytest tests/ -v --run-integration
 ./scripts/run-tests.sh
@@ -51,10 +53,14 @@ docker compose up -d postgres
 Что делает каждая команда:
 
 - `.venv/bin/python -m app.main` — запускает polling-бота и перед стартом вызывает `init_db()`.
+- `.venv/bin/ruff format .` — canonical Python formatter для репозитория.
+- `.venv/bin/ruff check .` — canonical Python lint для репозитория.
 - `.venv/bin/pytest tests/ -v -m unit` — быстрый unit-прогон без PostgreSQL.
 - `.venv/bin/pytest tests/ -v --run-integration` — включает integration tests, которые требуют доступный PostgreSQL.
-- `./scripts/run-tests.sh` — полный pytest-прогон с coverage по `app/`.
+- `./scripts/run-tests.sh` — полный локальный verify: сначала `ruff format`, затем `ruff check`, затем pytest с coverage по `app/`.
 - `docker compose up -d postgres` — поднимает единственный локальный сервис из `docker-compose.yml`.
+
+Если нужен repeatable integration verify через Docker PostgreSQL с диагностикой sandbox/socket проблем, используй runbook [ops/runbooks/postgres-integration-tests.md](runbooks/postgres-integration-tests.md).
 
 ## Application Runtime
 
@@ -85,4 +91,6 @@ docker compose up -d postgres
 
 - Default `DATABASE_URL` в [app/config.py](../../app/config.py) указывает на `postgresql+asyncpg://postgres:postgres@localhost:5432/telegram_shop_bot`; контейнер из `docker-compose.yml` публикуется на `localhost:55432` и использует credentials `lynx/password`. Для локального запуска это нужно синхронизировать через `.env`.
 - Integration tests пропускаются, если PostgreSQL недоступен или тестовую БД нельзя создать.
+- В agent/sandbox-среде `asyncpg` может не получить доступ к локальному сокету даже при живом Docker-контейнере; в этом случае integration pytest нужно повторить вне sandbox.
+- Несколько одновременных integration pytest-процессов против одной `shop_bot_test` БД могут конфликтовать на teardown (`deadlock detected`, `UndefinedTableError`). Evidence-команды в этом проекте нужно запускать последовательно.
 - Репозиторий содержит bootstrap-скрипты (`Makefile`, `scripts/test-setup.sh`, `scripts/test-ci.sh`) из учебного шаблона. Они полезны для окружения разработчика, но не заменяют команды запуска самого бота.

@@ -11,7 +11,6 @@ from app.models.cart_item import CartItem
 from app.models.product import Product
 from app.models.user import User
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -26,9 +25,7 @@ async def get_or_create_cart_by_telegram_id(
             return None
 
         cart_result = await session.execute(
-            select(Cart)
-            .options(selectinload(Cart.items))
-            .where(Cart.user_id == user.id)
+            select(Cart).options(selectinload(Cart.items)).where(Cart.user_id == user.id)
         )
         cart = cart_result.scalar_one_or_none()
         if cart is not None:
@@ -50,9 +47,7 @@ async def add_product_to_cart(
     product_id: int,
 ) -> Optional[CartItem]:
     try:
-        product_result = await session.execute(
-            select(Product).where(Product.id == product_id)
-        )
+        product_result = await session.execute(select(Product).where(Product.id == product_id))
         product = product_result.scalar_one_or_none()
         if product is None:
             return None

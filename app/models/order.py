@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime
 from decimal import Decimal
 
@@ -32,8 +34,8 @@ class Order(Base):
         server_default=func.now(),
     )
 
-    user: Mapped["User"] = relationship("User", back_populates="orders")
-    items: Mapped[list["OrderItem"]] = relationship(
+    user: Mapped[User] = relationship("User", back_populates="orders")
+    items: Mapped[list[OrderItem]] = relationship(
         "OrderItem",
         back_populates="order",
         cascade="all, delete-orphan",

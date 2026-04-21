@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-
 ALLOWED_DOC_KINDS = {
     "governance",
     "project",
@@ -114,17 +113,13 @@ def parse_frontmatter(path: Path) -> tuple[dict[str, Any], dict[str, int]]:
 
         current_value = frontmatter[current_key]
         if not isinstance(current_value, list):
-            raise ValueError(
-                f"frontmatter key '{current_key}' does not support nested values"
-            )
+            raise ValueError(f"frontmatter key '{current_key}' does not support nested values")
 
         if stripped.startswith("- "):
             item_body = stripped[2:].strip()
             if ":" in item_body:
                 nested_key, nested_value = item_body.split(":", 1)
-                current_list_item = {
-                    nested_key.strip(): parse_scalar(nested_value.strip())
-                }
+                current_list_item = {nested_key.strip(): parse_scalar(nested_value.strip())}
                 current_value.append(current_list_item)
             else:
                 current_value.append(parse_scalar(item_body))

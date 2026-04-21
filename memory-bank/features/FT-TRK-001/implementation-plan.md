@@ -5,7 +5,7 @@ doc_function: derived
 purpose: "Execution-план реализации кнопки просмотра статуса активных заказов с grounded discovery context, sequencing и verify strategy."
 derived_from:
   - feature.md
-status: active
+status: archived
 audience: humans_and_agents
 must_not_define:
   - ft_trk_001_scope
@@ -49,7 +49,7 @@ must_not_define:
 
 | Open Question ID | Question | Why unresolved | Blocks | Default action / escalation owner |
 | --- | --- | --- | --- | --- |
-| `OQ-01` | Какие именно статусы считать terminal-state на текущем baseline | В коде пока есть только `new`, а product roadmap перечисляет будущие статусы | `none` | Принять pragmatic terminal set `completed`, `cancelled`; остальные считать active до появления upstream status graph |
+| `OQ-01` | Какие именно статусы считать terminal-state на текущем baseline | Lifecycle уже расширен operator flow до канонического набора status values, но history/detail flows по-прежнему out of scope | `none` | Считать terminal-state только `completed`, `cancelled`; остальные статусы показывать как active |
 | `OQ-02` | Нужно ли показывать детали заказа помимо номера и статуса | User request требует именно просмотр статуса активных заказов, без detail screen | `none` | Ограничить output номером, статусом и краткой подписью; detail/history оставить downstream |
 
 ## Environment Contract

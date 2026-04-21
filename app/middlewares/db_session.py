@@ -7,7 +7,6 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.models.database import async_session_factory
 
-
 logger = logging.getLogger(__name__)
 
 

@@ -5,19 +5,20 @@ rootdir: /home/lynx/telegram_shop_bot
 configfile: pytest.ini
 plugins: cov-6.0.0, mock-3.14.0, asyncio-0.23.8, anyio-4.13.0, env-1.1.5
 asyncio: mode=Mode.AUTO
-collecting ... collected 12 items
+collecting ... collected 13 items
 
-tests/handlers/test_start.py::test_start_registers_new_user SKIPPED      [  8%]
-tests/handlers/test_start.py::test_start_updates_existing_user_without_duplicates SKIPPED [ 16%]
-tests/handlers/test_start.py::test_start_saves_all_user_fields SKIPPED   [ 25%]
-tests/handlers/test_start.py::test_start_updates_last_activity_on_repeat SKIPPED [ 33%]
-tests/handlers/test_start.py::test_start_handles_database_error PASSED   [ 41%]
-tests/handlers/test_start.py::test_start_handles_missing_from_user PASSED [ 50%]
-tests/handlers/test_start.py::test_start_updates_existing_user_unit PASSED [ 58%]
-tests/handlers/test_order_status.py::test_show_active_order_statuses_unit_happy_path PASSED [ 66%]
-tests/handlers/test_order_status.py::test_show_active_order_statuses_unit_empty_state PASSED [ 75%]
-tests/handlers/test_order_status.py::test_show_active_order_statuses_lists_only_current_user_active_orders SKIPPED [ 83%]
-tests/handlers/test_order_status.py::test_show_active_order_statuses_shows_empty_state SKIPPED [ 91%]
+tests/handlers/test_start.py::test_start_registers_new_user PASSED       [  7%]
+tests/handlers/test_start.py::test_start_updates_existing_user_without_duplicates PASSED [ 15%]
+tests/handlers/test_start.py::test_start_shows_operator_orders_button_for_operator_role PASSED [ 23%]
+tests/handlers/test_start.py::test_start_saves_all_user_fields PASSED    [ 30%]
+tests/handlers/test_start.py::test_start_updates_last_activity_on_repeat PASSED [ 38%]
+tests/handlers/test_start.py::test_start_handles_database_error PASSED   [ 46%]
+tests/handlers/test_start.py::test_start_handles_missing_from_user PASSED [ 53%]
+tests/handlers/test_start.py::test_start_updates_existing_user_unit PASSED [ 61%]
+tests/handlers/test_order_status.py::test_show_active_order_statuses_unit_happy_path PASSED [ 69%]
+tests/handlers/test_order_status.py::test_show_active_order_statuses_unit_empty_state PASSED [ 76%]
+tests/handlers/test_order_status.py::test_show_active_order_statuses_lists_only_current_user_active_orders PASSED [ 84%]
+tests/handlers/test_order_status.py::test_show_active_order_statuses_shows_empty_state PASSED [ 92%]
 tests/handlers/test_order_status.py::test_show_active_order_statuses_handles_database_error PASSED [100%]
 
-======================== 6 passed, 6 skipped in 20.89s =========================
+============================== 13 passed in 7.69s ==============================

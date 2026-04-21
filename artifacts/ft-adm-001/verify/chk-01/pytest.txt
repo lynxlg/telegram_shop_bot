@@ -1,0 +1,28 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.3.4, pluggy-1.6.0 -- /home/lynx/telegram_shop_bot/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/lynx/telegram_shop_bot
+configfile: pytest.ini
+plugins: cov-6.0.0, mock-3.14.0, asyncio-0.23.8, anyio-4.13.0, env-1.1.5
+asyncio: mode=Mode.AUTO
+collecting ... collected 17 items
+
+tests/handlers/test_start.py::test_start_registers_new_user PASSED       [  5%]
+tests/handlers/test_start.py::test_start_updates_existing_user_without_duplicates PASSED [ 11%]
+tests/handlers/test_start.py::test_start_shows_operator_orders_button_for_operator_role PASSED [ 17%]
+tests/handlers/test_start.py::test_start_shows_admin_catalog_button_for_admin_role PASSED [ 23%]
+tests/handlers/test_start.py::test_start_saves_all_user_fields PASSED    [ 29%]
+tests/handlers/test_start.py::test_start_updates_last_activity_on_repeat PASSED [ 35%]
+tests/handlers/test_start.py::test_start_handles_database_error PASSED   [ 41%]
+tests/handlers/test_start.py::test_start_handles_missing_from_user PASSED [ 47%]
+tests/handlers/test_start.py::test_start_updates_existing_user_unit PASSED [ 52%]
+tests/handlers/test_admin_catalog.py::test_open_admin_catalog_denies_regular_user PASSED [ 58%]
+tests/handlers/test_admin_catalog.py::test_open_admin_catalog_shows_root_categories_for_admin PASSED [ 64%]
+tests/handlers/test_admin_catalog.py::test_receive_category_name_creates_root_category PASSED [ 70%]
+tests/handlers/test_admin_catalog.py::test_receive_category_name_rejects_subcategory_when_parent_has_products PASSED [ 76%]
+tests/handlers/test_admin_catalog.py::test_receive_product_is_active_creates_product PASSED [ 82%]
+tests/handlers/test_admin_catalog.py::test_receive_product_edit_value_updates_name PASSED [ 88%]
+tests/handlers/test_admin_catalog.py::test_remove_category_rejects_category_with_products PASSED [ 94%]
+tests/handlers/test_admin_catalog.py::test_open_admin_product_denies_non_admin_callback PASSED [100%]
+
+============================= 17 passed in 13.14s ==============================

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import importlib.util
-from pathlib import Path
 import sys
+from pathlib import Path
 
 
 def load_validator_module():
@@ -47,10 +47,7 @@ def build_valid_memory_bank(repo_root: Path) -> None:
     )
     write_doc(
         repo_root / "memory-bank" / "dna" / "principles.md",
-        "doc_kind: governance\n"
-        "doc_function: canonical\n"
-        "purpose: Principles\n"
-        "status: active\n",
+        "doc_kind: governance\ndoc_function: canonical\npurpose: Principles\nstatus: active\n",
     )
     write_doc(
         repo_root / "memory-bank" / "dna" / "governance.md",
@@ -166,7 +163,10 @@ def test_validator_reports_index_orphans(tmp_path) -> None:
 
     messages = validator.validate_memory_bank(tmp_path)
 
-    assert any("index does not mention direct child document 'release.md'" in message.message for message in messages)
+    assert any(
+        "index does not mention direct child document 'release.md'" in message.message
+        for message in messages
+    )
 
 
 def test_validator_enforces_ops_doc_kind(tmp_path) -> None:

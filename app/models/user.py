@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime
 from typing import Optional
 
@@ -37,13 +39,13 @@ class User(Base):
         server_default=func.now(),
         server_onupdate=func.now(),
     )
-    cart: Mapped[Optional["Cart"]] = relationship(
+    cart: Mapped[Optional[Cart]] = relationship(
         "Cart",
         back_populates="user",
         uselist=False,
         cascade="all, delete-orphan",
     )
-    orders: Mapped[list["Order"]] = relationship(
+    orders: Mapped[list[Order]] = relationship(
         "Order",
         back_populates="user",
         cascade="all, delete-orphan",

@@ -81,12 +81,18 @@ Canonical lifecycle gates живут в [../flows/feature-flow.md](../flows/feat
 - **Framework:** `pytest` + `pytest-asyncio`. Все тесты живут в `tests/`, async-сценарии помечаются `@pytest.mark.asyncio`.
 - **Test split:** проект использует два режима. `unit` ставится автоматически для тестов без integration fixtures; `integration` ставится для тестов, использующих `db_session`, `test_engine` или `test_session_factory`.
 - **Canonical local commands:**
+  - Python format перед lint/test: `.venv/bin/ruff format .`
+  - Python lint перед тестами: `.venv/bin/ruff check .`
   - быстрый smoke для Python-приложения: `.venv/bin/pytest tests/ -v -m unit`
   - полный прогон приложения с PostgreSQL: `.venv/bin/pytest tests/ -v --run-integration`
   - прогон с coverage: `./scripts/run-tests.sh`
   - bootstrap/CLI smoke: `./scripts/test-ci.sh` и `./scripts/test-setup.sh` относятся к окружению репозитория, а не заменяют app-level verify
+- **Sequencing rule:** если используется full verify path вроде `./scripts/run-tests.sh`, сначала выполняются `ruff format` и `ruff check`, и только потом `pytest`, чтобы formatting/style/import issues останавливали verify до более дорогих тестов.
 - **Test data pattern:** базовый reusable setup живёт в [tests/conftest.py](/home/lynx/telegram_shop_bot/tests/conftest.py). Для Telegram объектов и ORM-сущностей используй существующие factory fixtures (`message_factory`, `callback_factory`, `category_factory`, `product_factory`) вместо дублирования hand-made setup в каждом тесте.
 - **Database strategy:** integration tests поднимают отдельную PostgreSQL БД на основе `tests/.env.test`, создают schema через `Base.metadata.create_all`, а между тестами очищают таблицы через `TRUNCATE ... RESTART IDENTITY CASCADE`. Если сценарий требует реальный SQLAlchemy session lifecycle или persistence between sessions, он должен идти через integration path, а не через моки.
+- **Docker reality for this repo:** canonical local PostgreSQL из `docker-compose.yml` слушает `localhost:55432`, тогда как `tests/.env.test` по умолчанию может смотреть на `localhost:5432`. Если integration verify выполняется именно через Docker PostgreSQL, агент должен синхронизировать test DSN на время прогона и вернуть его назад после verify; подробная процедура зафиксирована в [../ops/runbooks/postgres-integration-tests.md](../ops/runbooks/postgres-integration-tests.md).
+- **Sandbox boundary:** в агентской sandbox-среде локальные сокеты `asyncpg` могут быть запрещены даже при доступном Docker-контейнере. Если `pytest --run-integration` skip/fail-ится из-за socket permissions, canonical следующий шаг — повторить тот же integration прогон вне sandbox, а не объявлять feature manual-only.
+- **Sequencing rule for evidence:** integration pytest-команды, которые используют общую test DB `shop_bot_test`, нельзя гонять параллельно. Иначе teardown fixture может словить DDL/TRUNCATE race и выдать ложные `deadlock detected` или `UndefinedTableError`.
 - **Mocks and monkeypatching:** для unit-сценариев, которые не требуют реальной БД, canonical pattern — `monkeypatch`, `AsyncMock`, `MagicMock`, `SimpleNamespace`, как в [tests/test_database_unit.py](/home/lynx/telegram_shop_bot/tests/test_database_unit.py). Мокать нужно I/O boundary, а не внутренние assertions tested function.
 - **Where to add tests:**
   - handler tests — в `tests/handlers/`
