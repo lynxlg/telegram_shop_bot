@@ -23,12 +23,15 @@ from app.handlers.catalog import router as catalog_router
 from app.handlers.common.start import router as start_router
 from app.handlers.operator_orders import router as operator_orders_router
 from app.handlers.order_status import router as order_status_router
-from app.models.cart import Cart
-from app.models.cart_item import CartItem
-from app.models.category import Category
+from app.models.cart import Cart  # noqa: F401
+from app.models.cart_item import CartItem  # noqa: F401
+from app.models.category import Category  # noqa: F401
 from app.models.database import Base
-from app.models.product import Product
-from app.models.product_attribute import ProductAttribute
+from app.models.order import Order  # noqa: F401
+from app.models.order_item import OrderItem  # noqa: F401
+from app.models.product import Product  # noqa: F401
+from app.models.product_attribute import ProductAttribute  # noqa: F401
+from app.models.user import User  # noqa: F401
 
 TEST_ENV_FILE = Path(__file__).resolve().parent / ".env.test"
 INTEGRATION_FIXTURES = {"db_session", "test_engine", "test_session_factory"}

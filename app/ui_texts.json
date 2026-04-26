@@ -80,6 +80,9 @@
     "details": "Заказ: {order_number}\nПокупатель: {customer_name}\nСтатус: {status}\nТелефон: {phone}\nАдрес: {shipping_address}\nСумма: {total_amount}",
     "back_to_list_button": "К списку заказов"
   },
+  "order_notifications": {
+    "status_changed": "Статус заказа {order_number} обновлен: {status}."
+  },
   "admin_catalog": {
     "root_title": "Админ каталог",
     "category_title": "Раздел: {category_name}",

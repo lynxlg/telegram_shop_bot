@@ -1,6 +1,6 @@
 import logging
 
-from aiogram import F, Router
+from aiogram import Bot, F, Router
 from aiogram.types import CallbackQuery, Message
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -20,7 +20,7 @@ from app.models.user import User
 from app.services.order import (
     get_active_orders_for_operator,
     get_order_by_id,
-    update_order_status,
+    update_order_status_with_meta,
 )
 from app.services.order_text import (
     OPERATOR_ORDERS_ACCESS_DENIED_TEXT,
@@ -28,6 +28,7 @@ from app.services.order_text import (
     OPERATOR_ORDERS_LOAD_ERROR_TEXT,
     format_operator_order_details_text,
     format_operator_orders_list_text,
+    format_order_status_notification_text,
 )
 from app.ui_text import get_ui_text
 
@@ -46,6 +47,19 @@ async def _get_user_role(db: AsyncSession, telegram_id: int) -> str | None:
 async def _is_operator(db: AsyncSession, telegram_id: int) -> bool:
     role = await _get_user_role(db, telegram_id)
     return role in ALLOWED_ROLES
+
+
+async def _notify_buyer_about_status_change(
+    bot: Bot, order_id: int, telegram_id: int, text: str
+) -> None:
+    try:
+        await bot.send_message(telegram_id, text)
+    except Exception:
+        logger.exception(
+            "Failed to send order status notification telegram_id=%s order_id=%s",
+            telegram_id,
+            order_id,
+        )
 
 
 async def _render_orders_list(target: Message | CallbackQuery, db: AsyncSession) -> None:
@@ -153,6 +167,7 @@ async def change_operator_order_status(
     callback: CallbackQuery,
     callback_data: OperatorOrdersCallback,
     db: AsyncSession,
+    bot: Bot,
 ) -> None:
     try:
         if not await _is_operator(db, callback.from_user.id):
@@ -163,20 +178,31 @@ async def change_operator_order_status(
             await callback.answer()
             return
 
-        order = await update_order_status(db, callback_data.order_id, callback_data.status)
+        update_result = await update_order_status_with_meta(
+            db, callback_data.order_id, callback_data.status
+        )
         if callback.message is None:
             await callback.answer()
             return
 
-        if order is None:
+        if update_result is None:
             await callback.message.edit_text(OPERATOR_ORDERS_EMPTY_TEXT)
             await callback.answer()
             return
 
+        order = update_result.order
         await callback.message.edit_text(
             format_operator_order_details_text(order),
             reply_markup=build_operator_order_detail_keyboard(order.id, order.status),
         )
+
+        if update_result.changed and order.user is not None:
+            await _notify_buyer_about_status_change(
+                bot,
+                order.id,
+                order.user.telegram_id,
+                format_order_status_notification_text(order),
+            )
         await callback.answer()
     except SQLAlchemyError:
         logger.exception(

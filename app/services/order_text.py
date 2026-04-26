@@ -81,3 +81,12 @@ def format_operator_order_details_text(order: Order) -> str:
         shipping_address=order.shipping_address,
         total_amount=f"{total_amount:.2f} ₽",
     )
+
+
+def format_order_status_notification_text(order: Order) -> str:
+    return format_ui_text(
+        "order_notifications",
+        "status_changed",
+        order_number=order.order_number,
+        status=get_order_status_label(order.status),
+    )

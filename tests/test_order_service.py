@@ -15,6 +15,7 @@ from app.services.order import (
     InvalidAddressError,
     InvalidOrderStatusError,
     InvalidPhoneError,
+    OrderStatusUpdateResult,
     create_order_from_cart,
     get_active_orders_by_telegram_id,
     get_active_orders_for_operator,
@@ -22,6 +23,7 @@ from app.services.order import (
     normalize_address,
     normalize_phone,
     update_order_status,
+    update_order_status_with_meta,
 )
 
 
@@ -203,6 +205,57 @@ async def test_update_order_status_persists_new_status(db_session) -> None:
 
     assert updated_order is not None
     assert updated_order.status == "paid"
+    assert persisted_order is not None
+    assert persisted_order.status == "paid"
+
+
+@pytest.mark.asyncio
+async def test_update_order_status_with_meta_marks_changed_transition(db_session) -> None:
+    buyer = User(telegram_id=331016, username="buyer16", first_name="Buyer", last_name="Sixteen")
+    db_session.add(buyer)
+    await db_session.flush()
+    order = Order(
+        user_id=buyer.id,
+        order_number="ORD-100021",
+        status="new",
+        phone="+79990000016",
+        shipping_address="Тула, Советская 1",
+        total_amount=Decimal("175.00"),
+    )
+    db_session.add(order)
+    await db_session.commit()
+
+    result = await update_order_status_with_meta(db_session, order.id, "paid")
+
+    assert isinstance(result, OrderStatusUpdateResult)
+    assert result.previous_status == "new"
+    assert result.changed is True
+    assert result.order.status == "paid"
+
+
+@pytest.mark.asyncio
+async def test_update_order_status_with_meta_skips_unchanged_status(db_session) -> None:
+    buyer = User(telegram_id=331017, username="buyer17", first_name="Buyer", last_name="Seventeen")
+    db_session.add(buyer)
+    await db_session.flush()
+    order = Order(
+        user_id=buyer.id,
+        order_number="ORD-100022",
+        status="paid",
+        phone="+79990000017",
+        shipping_address="Омск, Мира 2",
+        total_amount=Decimal("180.00"),
+    )
+    db_session.add(order)
+    await db_session.commit()
+
+    result = await update_order_status_with_meta(db_session, order.id, "paid")
+    persisted_order = await get_order_by_id(db_session, order.id)
+
+    assert isinstance(result, OrderStatusUpdateResult)
+    assert result.previous_status == "paid"
+    assert result.changed is False
+    assert result.order.status == "paid"
     assert persisted_order is not None
     assert persisted_order.status == "paid"
 

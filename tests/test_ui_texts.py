@@ -27,6 +27,7 @@ from app.services.order_text import (
     format_operator_order_details_text,
     format_operator_orders_list_text,
     format_order_status,
+    format_order_status_notification_text,
 )
 from app.ui_text import format_ui_text, get_ui_text, load_ui_texts
 
@@ -188,6 +189,9 @@ def test_order_status_text_builder_maps_known_and_unknown_statuses() -> None:
         "Телефон: +79991234567\n"
         "Адрес: Москва, Тверская 1\n"
         "Сумма: 3998.00 ₽"
+    )
+    assert format_order_status_notification_text(operator_orders[0]) == (
+        "Статус заказа ORD-100001 обновлен: Оплачен."
     )
     assert keyboard.inline_keyboard[0][0].text == "ORD-100001"
     assert any(

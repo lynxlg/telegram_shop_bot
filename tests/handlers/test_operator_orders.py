@@ -77,25 +77,30 @@ async def test_show_operator_orders_unit_happy_path(message_factory, monkeypatch
 async def test_change_operator_order_status_unit_happy_path(callback_factory, monkeypatch) -> None:
     callback = callback_factory()
     callback.from_user = type("UserObj", (), {"id": 990001})()
+    bot = AsyncMock()
 
     async def fake_is_operator(_db, _telegram_id):
         return True
 
     async def fake_update_order_status(_db, _order_id, _status):
         return SimpleNamespace(
-            id=1,
-            order_number="ORD-800010",
-            status="paid",
-            phone="+79990000001",
-            shipping_address="Москва, Тверская 1",
-            total_amount=1500,
-            user=SimpleNamespace(first_name="Анна"),
+            order=SimpleNamespace(
+                id=1,
+                order_number="ORD-800010",
+                status="paid",
+                phone="+79990000001",
+                shipping_address="Москва, Тверская 1",
+                total_amount=1500,
+                user=SimpleNamespace(first_name="Анна", telegram_id=990010),
+            ),
+            previous_status="new",
+            changed=True,
         )
 
     monkeypatch.setattr(operator_orders_module, "_is_operator", fake_is_operator)
     monkeypatch.setattr(
         operator_orders_module,
-        "update_order_status",
+        "update_order_status_with_meta",
         fake_update_order_status,
     )
 
@@ -103,10 +108,108 @@ async def test_change_operator_order_status_unit_happy_path(callback_factory, mo
         callback,
         OperatorOrdersCallback(action=UPDATE_STATUS_ACTION, order_id=1, status="paid"),
         AsyncMock(),
+        bot,
     )
 
     callback.message.edit_text.assert_awaited_once()
     assert "Статус: Оплачен" in callback.message.edit_text.await_args.args[0]
+    bot.send_message.assert_awaited_once_with(
+        990010,
+        "Статус заказа ORD-800010 обновлен: Оплачен.",
+    )
+
+
+@pytest.mark.asyncio
+async def test_change_operator_order_status_unit_does_not_notify_when_status_unchanged(
+    callback_factory,
+    monkeypatch,
+) -> None:
+    callback = callback_factory()
+    callback.from_user = type("UserObj", (), {"id": 990002})()
+    bot = AsyncMock()
+
+    async def fake_is_operator(_db, _telegram_id):
+        return True
+
+    async def fake_update_order_status(_db, _order_id, _status):
+        return SimpleNamespace(
+            order=SimpleNamespace(
+                id=2,
+                order_number="ORD-800011",
+                status="paid",
+                phone="+79990000002",
+                shipping_address="Москва, Тверская 2",
+                total_amount=1800,
+                user=SimpleNamespace(first_name="Борис", telegram_id=990011),
+            ),
+            previous_status="paid",
+            changed=False,
+        )
+
+    monkeypatch.setattr(operator_orders_module, "_is_operator", fake_is_operator)
+    monkeypatch.setattr(
+        operator_orders_module,
+        "update_order_status_with_meta",
+        fake_update_order_status,
+    )
+
+    await change_operator_order_status(
+        callback,
+        OperatorOrdersCallback(action=UPDATE_STATUS_ACTION, order_id=2, status="paid"),
+        AsyncMock(),
+        bot,
+    )
+
+    callback.message.edit_text.assert_awaited_once()
+    bot.send_message.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_change_operator_order_status_unit_ignores_notification_failure(
+    callback_factory,
+    monkeypatch,
+) -> None:
+    callback = callback_factory()
+    callback.from_user = type("UserObj", (), {"id": 990003})()
+    bot = AsyncMock()
+
+    async def fake_is_operator(_db, _telegram_id):
+        return True
+
+    async def fake_update_order_status(_db, _order_id, _status):
+        return SimpleNamespace(
+            order=SimpleNamespace(
+                id=3,
+                order_number="ORD-800012",
+                status="assembling",
+                phone="+79990000003",
+                shipping_address="Москва, Тверская 3",
+                total_amount=2100,
+                user=SimpleNamespace(first_name="Вера", telegram_id=990012),
+            ),
+            previous_status="paid",
+            changed=True,
+        )
+
+    bot.send_message.side_effect = RuntimeError("telegram down")
+
+    monkeypatch.setattr(operator_orders_module, "_is_operator", fake_is_operator)
+    monkeypatch.setattr(
+        operator_orders_module,
+        "update_order_status_with_meta",
+        fake_update_order_status,
+    )
+
+    await change_operator_order_status(
+        callback,
+        OperatorOrdersCallback(action=UPDATE_STATUS_ACTION, order_id=3, status="assembling"),
+        AsyncMock(),
+        bot,
+    )
+
+    callback.message.edit_text.assert_awaited_once()
+    callback.answer.assert_awaited_once()
+    bot.send_message.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -245,6 +348,7 @@ async def test_change_operator_order_status_updates_order(
     await db_session.commit()
     callback = callback_factory()
     callback.from_user = type("UserObj", (), {"id": operator.telegram_id})()
+    bot = AsyncMock()
 
     await change_operator_order_status(
         callback,
@@ -254,11 +358,16 @@ async def test_change_operator_order_status_updates_order(
             status="paid",
         ),
         db_session,
+        bot,
     )
 
     callback.message.edit_text.assert_awaited_once()
     response = callback.message.edit_text.await_args.args[0]
     assert "Статус: Оплачен" in response
+    bot.send_message.assert_awaited_once_with(
+        buyer.telegram_id,
+        "Статус заказа ORD-700020 обновлен: Оплачен.",
+    )
 
 
 @pytest.mark.asyncio
@@ -318,6 +427,7 @@ async def test_operator_callbacks_denied_for_regular_user(
     await db_session.commit()
     callback = callback_factory()
     callback.from_user = type("UserObj", (), {"id": user.telegram_id})()
+    bot = AsyncMock()
 
     await open_operator_order(
         callback,
@@ -329,6 +439,19 @@ async def test_operator_callbacks_denied_for_regular_user(
         "У вас нет доступа к управлению заказами.",
         show_alert=True,
     )
+
+    callback.answer.reset_mock()
+    await change_operator_order_status(
+        callback,
+        OperatorOrdersCallback(action=UPDATE_STATUS_ACTION, order_id=1, status="paid"),
+        db_session,
+        bot,
+    )
+    callback.answer.assert_awaited_once_with(
+        "У вас нет доступа к управлению заказами.",
+        show_alert=True,
+    )
+    bot.send_message.assert_not_awaited()
 
 
 @pytest.mark.asyncio

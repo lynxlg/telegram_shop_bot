@@ -57,6 +57,13 @@ class CheckoutSummary:
     total_amount: Decimal
 
 
+@dataclass(slots=True)
+class OrderStatusUpdateResult:
+    order: Order
+    previous_status: str
+    changed: bool
+
+
 def normalize_phone(phone: str) -> str:
     normalized = re.sub(r"[^\d+]", "", phone.strip())
     if normalized.startswith("8") and len(re.sub(r"\D", "", normalized)) == 11:
@@ -130,6 +137,17 @@ async def update_order_status(
     order_id: int,
     status: str,
 ) -> Order | None:
+    result = await update_order_status_with_meta(session, order_id, status)
+    if result is None:
+        return None
+    return result.order
+
+
+async def update_order_status_with_meta(
+    session: AsyncSession,
+    order_id: int,
+    status: str,
+) -> OrderStatusUpdateResult | None:
     if status not in CANONICAL_ORDER_STATUSES:
         raise InvalidOrderStatusError(status)
 
@@ -138,9 +156,20 @@ async def update_order_status(
         if order is None:
             return None
 
-        order.status = status
-        await session.commit()
-        return await get_order_by_id(session, order_id)
+        previous_status = order.status
+        changed = previous_status != status
+        if changed:
+            order.status = status
+            await session.commit()
+            refreshed_order = await get_order_by_id(session, order_id)
+            if refreshed_order is not None:
+                order = refreshed_order
+
+        return OrderStatusUpdateResult(
+            order=order,
+            previous_status=previous_status,
+            changed=changed,
+        )
     except SQLAlchemyError:
         await session.rollback()
         logger.exception("Failed to update order status order_id=%s status=%s", order_id, status)
