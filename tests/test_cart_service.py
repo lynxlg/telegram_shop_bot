@@ -10,6 +10,7 @@ from app.models.product import Product
 from app.models.user import User
 from app.services.cart import (
     add_product_to_cart,
+    clear_cart,
     decrease_cart_item_quantity,
     get_cart_by_telegram_id,
     increase_cart_item_quantity,
@@ -135,6 +136,27 @@ async def test_remove_cart_item(db_session) -> None:
     removed = await remove_cart_item(db_session, cart_item.id)
 
     assert removed is True
+
+
+@pytest.mark.asyncio
+async def test_clear_cart_removes_all_items(db_session) -> None:
+    user = User(telegram_id=111010, username="user", first_name="User", last_name="Ten")
+    category = Category(name="Одежда")
+    db_session.add_all([user, category])
+    await db_session.flush()
+    first_product = Product(category_id=category.id, name="Футболка", price=Decimal("100.00"))
+    second_product = Product(category_id=category.id, name="Худи", price=Decimal("200.00"))
+    db_session.add_all([first_product, second_product])
+    await db_session.commit()
+    await add_product_to_cart(db_session, user.telegram_id, first_product.id)
+    await add_product_to_cart(db_session, user.telegram_id, second_product.id)
+
+    cleared = await clear_cart(db_session, user.telegram_id)
+    cart = await get_cart_by_telegram_id(db_session, user.telegram_id)
+
+    assert cleared is True
+    assert cart is not None
+    assert cart.items == []
 
 
 @pytest.mark.asyncio

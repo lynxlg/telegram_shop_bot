@@ -9,6 +9,7 @@ class CartCallback(CallbackData, prefix="cart"):
 INCREASE_ACTION = "increase"
 DECREASE_ACTION = "decrease"
 REMOVE_ACTION = "remove"
+CLEAR_ACTION = "clear"
 START_CHECKOUT_ACTION = "checkout"
 CONFIRM_ORDER_ACTION = "confirm_order"
 CANCEL_CHECKOUT_ACTION = "cancel_checkout"

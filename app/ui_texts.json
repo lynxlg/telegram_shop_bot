@@ -33,6 +33,7 @@
     "item_line": "{index}. {name}\nЦена: {price}\nКоличество: {quantity}\nСумма: {total}",
     "total_label": "Итого: {total}",
     "checkout_button": "Оформить заказ",
+    "clear_button": "Очистить корзину",
     "increase_button": "+",
     "decrease_button": "-",
     "remove_item_button": "Удалить {product_name}"

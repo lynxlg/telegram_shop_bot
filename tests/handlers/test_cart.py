@@ -14,6 +14,7 @@ from app.callbacks.cart import (
 from app.handlers import cart as cart_module
 from app.handlers.cart import (
     cancel_checkout_by_callback,
+    clear_items,
     confirm_checkout,
     decrease_item,
     increase_item,
@@ -115,6 +116,29 @@ async def test_remove_item_updates_cart(db_session, callback_factory) -> None:
     callback_data = CartCallback(action=REMOVE_ACTION, cart_item_id=cart_item.id)
 
     await remove_item(callback, callback_data, db_session)
+
+    callback.message.edit_text.assert_awaited_once_with("Корзина пуста.")
+
+
+@pytest.mark.asyncio
+async def test_clear_items_updates_cart(db_session, callback_factory) -> None:
+    user, _cart_item = await _seed_cart(db_session)
+    callback = callback_factory()
+    callback.from_user = SimpleNamespace(id=user.telegram_id)
+
+    await clear_items(callback, db_session)
+
+    callback.message.edit_text.assert_awaited_once_with("Корзина пуста.")
+
+
+@pytest.mark.asyncio
+async def test_clear_items_shows_empty_cart_when_already_empty(
+    db_session, callback_factory
+) -> None:
+    callback = callback_factory()
+    callback.from_user = SimpleNamespace(id=222001)
+
+    await clear_items(callback, db_session)
 
     callback.message.edit_text.assert_awaited_once_with("Корзина пуста.")
 

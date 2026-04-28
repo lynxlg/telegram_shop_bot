@@ -139,7 +139,8 @@ def test_keyboards_preserve_existing_button_copy() -> None:
         "-",
         "Удалить Белая футболка",
     ]
-    assert cart_keyboard.inline_keyboard[1][0].text == "Оформить заказ"
+    assert cart_keyboard.inline_keyboard[1][0].text == "Очистить корзину"
+    assert cart_keyboard.inline_keyboard[2][0].text == "Оформить заказ"
     assert checkout_keyboard.inline_keyboard[0][0].text == "Подтвердить заказ"
     assert checkout_keyboard.inline_keyboard[1][0].text == "Отменить"
 

@@ -9,6 +9,7 @@ from aiogram.types import (
 
 from app.callbacks.cart import (
     CANCEL_CHECKOUT_ACTION,
+    CLEAR_ACTION,
     CONFIRM_ORDER_ACTION,
     DECREASE_ACTION,
     INCREASE_ACTION,
@@ -55,6 +56,15 @@ def build_cart_keyboard(cart_items: List[CartItem]) -> InlineKeyboardMarkup:
                 ),
             ]
         )
+
+    inline_keyboard.append(
+        [
+            InlineKeyboardButton(
+                text=get_ui_text("cart", "clear_button"),
+                callback_data=CartCallback(action=CLEAR_ACTION).pack(),
+            )
+        ]
+    )
 
     inline_keyboard.append(
         [

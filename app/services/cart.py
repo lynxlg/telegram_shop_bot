@@ -166,3 +166,25 @@ async def remove_cart_item(
         await session.rollback()
         logger.exception("Failed to remove cart_item_id=%s", cart_item_id)
         raise
+
+
+async def clear_cart(
+    session: AsyncSession,
+    telegram_id: int,
+) -> bool:
+    try:
+        cart = await get_cart_by_telegram_id(session, telegram_id)
+        if cart is None or not cart.items:
+            return False
+
+        for cart_item in list(cart.items):
+            await session.delete(cart_item)
+
+        await session.flush()
+        cart.items.clear()
+        await session.commit()
+        return True
+    except SQLAlchemyError:
+        await session.rollback()
+        logger.exception("Failed to clear cart for telegram_id=%s", telegram_id)
+        raise
