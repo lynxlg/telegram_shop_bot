@@ -1,7 +1,7 @@
 {
   "main_menu": {
-    "catalog_button": "Каталог",
-    "cart_button": "Корзина",
+    "catalog_button": "🛍 Каталог",
+    "cart_button": "🛒 Корзина",
     "order_status_button": "Статус заказа",
     "operator_orders_button": "Заказы",
     "admin_catalog_button": "Админ каталог"

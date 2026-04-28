@@ -37,7 +37,7 @@ def test_load_ui_texts_returns_dict() -> None:
     data = load_ui_texts()
 
     assert isinstance(data, dict)
-    assert data["main_menu"]["catalog_button"] == "Каталог"
+    assert data["main_menu"]["catalog_button"] == "🛍 Каталог"
     assert data["main_menu"]["order_status_button"] == "Статус заказа"
 
 
@@ -64,8 +64,8 @@ def test_main_menu_keyboard_uses_json_texts() -> None:
     operator_keyboard = get_main_menu_keyboard("operator")
     admin_keyboard = get_main_menu_keyboard("admin")
 
-    assert keyboard.keyboard[0][0].text == "Каталог"
-    assert keyboard.keyboard[0][1].text == "Корзина"
+    assert keyboard.keyboard[0][0].text == "🛍 Каталог"
+    assert keyboard.keyboard[0][1].text == "🛒 Корзина"
     assert keyboard.keyboard[1][0].text == "Статус заказа"
     assert len(keyboard.keyboard) == 2
     assert operator_keyboard.keyboard[2][0].text == "Заказы"
