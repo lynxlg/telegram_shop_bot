@@ -22,8 +22,25 @@ def test_settings_use_default_values_when_env_file_missing(monkeypatch) -> None:
 
     assert settings.bot_token == "TEST_BOT_TOKEN"
     assert settings.database_url.endswith("/telegram_shop_bot")
+    assert settings.yookassa_webhook_port == 8080
+    assert settings.yookassa_webhook_path == "/webhooks/yookassa"
 
 
 def test_settings_validate_empty_values() -> None:
     with pytest.raises(ValidationError):
         Settings(bot_token="", database_url="")
+
+
+def test_settings_load_yookassa_values() -> None:
+    settings = Settings(
+        yookassa_shop_id="shop-1",
+        yookassa_secret_key="secret-1",
+        yookassa_return_url="https://example.com/return",
+        yookassa_webhook_host="127.0.0.1",
+        yookassa_webhook_port=8090,
+        yookassa_webhook_path="/hooks/yookassa",
+    )
+
+    assert settings.yookassa_shop_id == "shop-1"
+    assert settings.yookassa_secret_key == "secret-1"
+    assert settings.yookassa_webhook_port == 8090

@@ -28,6 +28,14 @@ CANONICAL_ORDER_STATUSES = (
     "cancelled",
 )
 TERMINAL_ORDER_STATUSES = ("completed", "cancelled")
+OPERATOR_ALLOWED_STATUS_TRANSITIONS = {
+    "new": ("new", "cancelled"),
+    "paid": ("paid", "assembling", "cancelled"),
+    "assembling": ("assembling", "delivering", "cancelled"),
+    "delivering": ("delivering", "completed", "cancelled"),
+    "completed": ("completed",),
+    "cancelled": ("cancelled",),
+}
 
 
 class OrderCreationError(Exception):
@@ -47,6 +55,10 @@ class InvalidAddressError(OrderCreationError):
 
 
 class InvalidOrderStatusError(ValueError):
+    pass
+
+
+class InvalidOrderStatusTransitionError(ValueError):
     pass
 
 
@@ -101,10 +113,14 @@ def _build_order_number(order_id: int) -> str:
     return f"{ORDER_NUMBER_PREFIX}{order_id:06d}"
 
 
+def get_operator_available_statuses(current_status: str) -> tuple[str, ...]:
+    return OPERATOR_ALLOWED_STATUS_TRANSITIONS.get(current_status, (current_status,))
+
+
 async def get_active_orders_for_operator(session: AsyncSession) -> list[Order]:
     result = await session.execute(
         select(Order)
-        .options(selectinload(Order.user))
+        .options(selectinload(Order.user), selectinload(Order.payment_attempts))
         .where(Order.status.not_in(TERMINAL_ORDER_STATUSES))
         .order_by(Order.created_at.desc(), Order.id.desc())
     )
@@ -113,7 +129,9 @@ async def get_active_orders_for_operator(session: AsyncSession) -> list[Order]:
 
 async def get_order_by_id(session: AsyncSession, order_id: int) -> Order | None:
     result = await session.execute(
-        select(Order).options(selectinload(Order.user)).where(Order.id == order_id)
+        select(Order)
+        .options(selectinload(Order.user), selectinload(Order.payment_attempts))
+        .where(Order.id == order_id)
     )
     return result.scalar_one_or_none()
 
@@ -174,6 +192,23 @@ async def update_order_status_with_meta(
         await session.rollback()
         logger.exception("Failed to update order status order_id=%s status=%s", order_id, status)
         raise
+
+
+async def update_order_status_from_operator(
+    session: AsyncSession,
+    order_id: int,
+    status: str,
+) -> OrderStatusUpdateResult | None:
+    order = await get_order_by_id(session, order_id)
+    if order is None:
+        return None
+
+    if status not in get_operator_available_statuses(order.status):
+        raise InvalidOrderStatusTransitionError(
+            f"transition {order.status} -> {status} is not allowed"
+        )
+
+    return await update_order_status_with_meta(session, order_id, status)
 
 
 async def create_order_from_cart(

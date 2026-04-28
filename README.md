@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/lynxlg/telegram_shop_bot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/lynxlg/telegram_shop_bot/actions/workflows/ci.yml)
 
-Бот поддерживает базовый сценарий просмотра каталога и работы с корзиной: пользователь может открыть разделы, перейти по иерархии категорий, посмотреть карточку товара, добавить товар в корзину и затем управлять количеством позиций. Карточка товара поддерживает одно изображение по полю `image_url`, а корзина сохраняется в PostgreSQL между сессиями.
+Бот поддерживает каталог, корзину, checkout заказов, operator workflow по заказам и online-оплату через YooKassa. После оформления заказа пользователь может получить ссылку на оплату, а webhook `payment.succeeded` переводит заказ в `paid`.
 
 ## Запуск бота
 

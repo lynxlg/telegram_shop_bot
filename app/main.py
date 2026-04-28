@@ -8,8 +8,10 @@ from app.handlers.catalog import router as catalog_router
 from app.handlers.common.start import router as start_router
 from app.handlers.operator_orders import router as operator_orders_router
 from app.handlers.order_status import router as order_status_router
+from app.handlers.payment import router as payment_router
 from app.middlewares.db_session import DbSessionMiddleware
 from app.models.database import dispose_engine, init_db
+from app.webhooks.yookassa import start_yookassa_webhook_server, stop_yookassa_webhook_server
 
 logger = logging.getLogger(__name__)
 
@@ -28,17 +30,21 @@ async def main() -> None:
     dispatcher.include_router(catalog_router)
     dispatcher.include_router(cart_router)
     dispatcher.include_router(order_status_router)
+    dispatcher.include_router(payment_router)
     dispatcher.include_router(operator_orders_router)
     dispatcher.include_router(admin_catalog_router)
+    webhook_runner = None
 
     try:
         await init_db()
+        webhook_runner = await start_yookassa_webhook_server(bot)
         logger.info("Bot is starting")
         await dispatcher.start_polling(bot)
     except Exception:
         logger.exception("Bot stopped due to an unexpected error")
         raise
     finally:
+        await stop_yookassa_webhook_server(webhook_runner)
         await bot.session.close()
         await dispose_engine()
         logger.info("Bot shutdown completed")

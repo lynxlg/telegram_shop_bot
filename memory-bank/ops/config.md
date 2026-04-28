@@ -52,6 +52,12 @@ settings.database_url
 - Имена env vars следуют именам полей `Settings` в верхнем регистре с подчёркиваниями:
   - `bot_token` -> `BOT_TOKEN`
   - `database_url` -> `DATABASE_URL`
+  - `yookassa_shop_id` -> `YOOKASSA_SHOP_ID`
+  - `yookassa_secret_key` -> `YOOKASSA_SECRET_KEY`
+  - `yookassa_return_url` -> `YOOKASSA_RETURN_URL`
+  - `yookassa_webhook_host` -> `YOOKASSA_WEBHOOK_HOST`
+  - `yookassa_webhook_port` -> `YOOKASSA_WEBHOOK_PORT`
+  - `yookassa_webhook_path` -> `YOOKASSA_WEBHOOK_PATH`
 - Вложенной структуры и специального separator для env vars сейчас нет.
 - `PORT` существует только в shell context через `.envrc` и не читается `Settings`.
 
@@ -61,12 +67,19 @@ settings.database_url
 | --- | --- | --- | --- |
 | `BOT_TOKEN` | Telegram bot token для runtime | `TEST_BOT_TOKEN` | app/runtime |
 | `DATABASE_URL` | Async SQLAlchemy DSN | `postgresql+asyncpg://postgres:postgres@localhost:5432/telegram_shop_bot` | app/runtime |
+| `YOOKASSA_SHOP_ID` | Shop ID YooKassa API | `None` | payment runtime |
+| `YOOKASSA_SECRET_KEY` | Secret key YooKassa API | `None` | payment runtime |
+| `YOOKASSA_RETURN_URL` | URL возврата redirect-платежа | `https://example.com/yookassa/return` | payment runtime |
+| `YOOKASSA_WEBHOOK_HOST` | Host встроенного webhook listener | `0.0.0.0` | payment runtime |
+| `YOOKASSA_WEBHOOK_PORT` | Port встроенного webhook listener | `8080` | payment runtime |
+| `YOOKASSA_WEBHOOK_PATH` | Path встроенного webhook listener | `/webhooks/yookassa` | payment runtime |
 | `PORT` | Вспомогательная переменная shell/bootstrap tooling | задаётся `.envrc` через `port-selector`, если не указана | bootstrap tooling |
 
 ## Secrets
 
 - Секреты в репозиторий не коммитятся; локально они должны приходить через `.env` или внешние env vars.
 - Минимальный секрет для runtime: `BOT_TOKEN`.
+- Для online payment секретами также считаются `YOOKASSA_SHOP_ID` и `YOOKASSA_SECRET_KEY`.
 - `DATABASE_URL` может содержать пароль, поэтому его также считать секретом.
 - На текущий момент в проектной документации не зафиксирован внешний secret manager для non-local окружений; до появления такого источника нельзя придумывать процедуру выдачи секретов.
 

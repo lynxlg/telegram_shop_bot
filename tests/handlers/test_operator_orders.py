@@ -18,6 +18,7 @@ from app.handlers.operator_orders import (
     show_operator_orders,
 )
 from app.models.order import Order
+from app.models.payment_attempt import PaymentAttempt
 from app.models.user import User
 
 
@@ -87,35 +88,36 @@ async def test_change_operator_order_status_unit_happy_path(callback_factory, mo
             order=SimpleNamespace(
                 id=1,
                 order_number="ORD-800010",
-                status="paid",
+                status="assembling",
                 phone="+79990000001",
                 shipping_address="Москва, Тверская 1",
                 total_amount=1500,
+                payment_attempts=[],
                 user=SimpleNamespace(first_name="Анна", telegram_id=990010),
             ),
-            previous_status="new",
+            previous_status="paid",
             changed=True,
         )
 
     monkeypatch.setattr(operator_orders_module, "_is_operator", fake_is_operator)
     monkeypatch.setattr(
         operator_orders_module,
-        "update_order_status_with_meta",
+        "update_order_status_from_operator",
         fake_update_order_status,
     )
 
     await change_operator_order_status(
         callback,
-        OperatorOrdersCallback(action=UPDATE_STATUS_ACTION, order_id=1, status="paid"),
+        OperatorOrdersCallback(action=UPDATE_STATUS_ACTION, order_id=1, status="assembling"),
         AsyncMock(),
         bot,
     )
 
     callback.message.edit_text.assert_awaited_once()
-    assert "Статус: Оплачен" in callback.message.edit_text.await_args.args[0]
+    assert "Статус: Собран" in callback.message.edit_text.await_args.args[0]
     bot.send_message.assert_awaited_once_with(
         990010,
-        "Статус заказа ORD-800010 обновлен: Оплачен.",
+        "Статус заказа ORD-800010 обновлен: Собран.",
     )
 
 
@@ -140,6 +142,7 @@ async def test_change_operator_order_status_unit_does_not_notify_when_status_unc
                 phone="+79990000002",
                 shipping_address="Москва, Тверская 2",
                 total_amount=1800,
+                payment_attempts=[],
                 user=SimpleNamespace(first_name="Борис", telegram_id=990011),
             ),
             previous_status="paid",
@@ -149,7 +152,7 @@ async def test_change_operator_order_status_unit_does_not_notify_when_status_unc
     monkeypatch.setattr(operator_orders_module, "_is_operator", fake_is_operator)
     monkeypatch.setattr(
         operator_orders_module,
-        "update_order_status_with_meta",
+        "update_order_status_from_operator",
         fake_update_order_status,
     )
 
@@ -185,6 +188,7 @@ async def test_change_operator_order_status_unit_ignores_notification_failure(
                 phone="+79990000003",
                 shipping_address="Москва, Тверская 3",
                 total_amount=2100,
+                payment_attempts=[],
                 user=SimpleNamespace(first_name="Вера", telegram_id=990012),
             ),
             previous_status="paid",
@@ -196,7 +200,7 @@ async def test_change_operator_order_status_unit_ignores_notification_failure(
     monkeypatch.setattr(operator_orders_module, "_is_operator", fake_is_operator)
     monkeypatch.setattr(
         operator_orders_module,
-        "update_order_status_with_meta",
+        "update_order_status_from_operator",
         fake_update_order_status,
     )
 
@@ -304,6 +308,19 @@ async def test_open_operator_order_shows_details_and_status_buttons(
         created_at=datetime.now(timezone.utc),
     )
     db_session.add(order)
+    await db_session.flush()
+    db_session.add(
+        PaymentAttempt(
+            order_id=order.id,
+            provider="yookassa",
+            provider_payment_id="pay_700010",
+            idempotence_key="idem_700010",
+            status="pending",
+            amount="900.00",
+            currency="RUB",
+            confirmation_url="https://pay.example/700010",
+        )
+    )
     await db_session.commit()
     callback = callback_factory()
     callback.from_user = type("UserObj", (), {"id": operator.telegram_id})()
@@ -320,8 +337,9 @@ async def test_open_operator_order_shows_details_and_status_buttons(
     assert "Заказ: ORD-700010" in text
     assert "Покупатель: Мария" in text
     assert "Статус: Создан" in text
+    assert "Статус оплаты: ожидает оплаты" in text
     assert any(button.text == "• Создан" for row in markup.inline_keyboard for button in row)
-    assert any(button.text == "Оплачен" for row in markup.inline_keyboard for button in row)
+    assert any(button.text == "Отменен" for row in markup.inline_keyboard for button in row)
 
 
 @pytest.mark.asyncio
@@ -338,10 +356,70 @@ async def test_change_operator_order_status_updates_order(
     order = Order(
         user_id=buyer.id,
         order_number="ORD-700020",
-        status="new",
+        status="paid",
         phone="+79990000010",
         shipping_address="Самара, Ленина 1",
         total_amount="1200.00",
+        created_at=datetime.now(timezone.utc),
+    )
+    db_session.add(order)
+    await db_session.flush()
+    db_session.add(
+        PaymentAttempt(
+            order_id=order.id,
+            provider="yookassa",
+            provider_payment_id="pay_700020",
+            idempotence_key="idem_700020",
+            status="succeeded",
+            amount="1200.00",
+            currency="RUB",
+            confirmation_url="https://pay.example/700020",
+            payment_method_type="bank_card",
+        )
+    )
+    await db_session.commit()
+    callback = callback_factory()
+    callback.from_user = type("UserObj", (), {"id": operator.telegram_id})()
+    bot = AsyncMock()
+
+    await change_operator_order_status(
+        callback,
+        OperatorOrdersCallback(
+            action=UPDATE_STATUS_ACTION,
+            order_id=order.id,
+            status="assembling",
+        ),
+        db_session,
+        bot,
+    )
+
+    callback.message.edit_text.assert_awaited_once()
+    response = callback.message.edit_text.await_args.args[0]
+    assert "Статус: Собран" in response
+    bot.send_message.assert_awaited_once_with(
+        buyer.telegram_id,
+        "Статус заказа ORD-700020 обновлен: Собран.",
+    )
+
+
+@pytest.mark.asyncio
+async def test_change_operator_order_status_rejects_paid_transition_from_new(
+    db_session,
+    callback_factory,
+) -> None:
+    operator = User(
+        telegram_id=771016, username="operator16", first_name="Павел", last_name="Оп", role="admin"
+    )
+    buyer = User(telegram_id=771017, username="buyer17", first_name="Ирина", last_name="Покупатель")
+    db_session.add_all([operator, buyer])
+    await db_session.flush()
+    order = Order(
+        user_id=buyer.id,
+        order_number="ORD-700021",
+        status="new",
+        phone="+79990000012",
+        shipping_address="Самара, Ленина 2",
+        total_amount="1300.00",
         created_at=datetime.now(timezone.utc),
     )
     db_session.add(order)
@@ -361,13 +439,8 @@ async def test_change_operator_order_status_updates_order(
         bot,
     )
 
-    callback.message.edit_text.assert_awaited_once()
-    response = callback.message.edit_text.await_args.args[0]
-    assert "Статус: Оплачен" in response
-    bot.send_message.assert_awaited_once_with(
-        buyer.telegram_id,
-        "Статус заказа ORD-700020 обновлен: Оплачен.",
-    )
+    callback.answer.assert_awaited_once_with("Этот переход статуса недоступен.", show_alert=True)
+    bot.send_message.assert_not_awaited()
 
 
 @pytest.mark.asyncio

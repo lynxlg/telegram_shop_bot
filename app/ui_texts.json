@@ -77,9 +77,31 @@
     "empty": "Активных заказов для обработки нет.",
     "load_error": "Не удалось загрузить заказы. Попробуйте позже.",
     "access_denied": "У вас нет доступа к управлению заказами.",
+    "invalid_transition": "Этот переход статуса недоступен.",
     "item_line": "{index}. {order_number} - {customer_name} - {status}",
-    "details": "Заказ: {order_number}\nПокупатель: {customer_name}\nСтатус: {status}\nТелефон: {phone}\nАдрес: {shipping_address}\nСумма: {total_amount}",
+    "details": "Заказ: {order_number}\nПокупатель: {customer_name}\nСтатус: {status}\nТелефон: {phone}\nАдрес: {shipping_address}\nСумма: {total_amount}\n\nОплата:\n{payment_facts}",
+    "payment_missing": "Попыток оплаты: {attempts_count}\nСтатус оплаты: попыток еще не было",
+    "payment_details": "Попыток оплаты: {attempts_count}\nСтатус оплаты: {payment_status}\nPayment ID: {provider_payment_id}\nМетод: {payment_method}\nПричина ошибки: {failure_reason}",
+    "payment_failure_empty": "нет",
+    "payment_method_empty": "не указан",
+    "payment_id_empty": "не назначен",
     "back_to_list_button": "К списку заказов"
+  },
+  "payment": {
+    "pay_button": "Оплатить заказ",
+    "retry_button": "Оплатить снова",
+    "checkout_prompt": "Оплатите заказ по кнопке ниже.",
+    "payment_create_error": "Заказ создан, но ссылку на оплату сейчас получить не удалось. Попробуйте позже.",
+    "payment_unavailable": "Онлайн-оплата сейчас недоступна.",
+    "failed_notification": "Оплата заказа {order_number} не завершена. Можно попробовать еще раз.",
+    "success_notification": "Оплата заказа {order_number} подтверждена.",
+    "retry_ready": "Ссылка на оплату для заказа #{order_id} готова.",
+    "order_not_found": "Заказ не найден.",
+    "already_paid": "Заказ уже оплачен.",
+    "status_pending": "ожидает оплаты",
+    "status_waiting_for_capture": "ожидает списания",
+    "status_succeeded": "оплачен",
+    "status_canceled": "отменен"
   },
   "order_notifications": {
     "status_changed": "Статус заказа {order_number} обновлен: {status}."

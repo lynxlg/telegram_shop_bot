@@ -14,6 +14,8 @@ audience: humans_and_agents
 
 Каталог `memory-bank/adr/` хранит instantiated ADR проекта.
 
+- [`ADR-001-yookassa-webhook-is-payment-source-of-truth.md`](ADR-001-yookassa-webhook-is-payment-source-of-truth.md) — оплата через YooKassa: источник истины для `paid` и граница между локальной БД и webhook events.
+
 - Заводи новый ADR из шаблона [`../flows/templates/adr/ADR-XXX.md`](../flows/templates/adr/ADR-XXX.md).
 - Держи в этом каталоге только реальные decision records, а не заметки или черновые исследования.
 - Если ADR пока нет, этот индекс остается пустым и служит ожидаемой точкой размещения для будущих решений.

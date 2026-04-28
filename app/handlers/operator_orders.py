@@ -18,13 +18,15 @@ from app.keyboards.operator_orders import (
 )
 from app.models.user import User
 from app.services.order import (
+    InvalidOrderStatusTransitionError,
     get_active_orders_for_operator,
     get_order_by_id,
-    update_order_status_with_meta,
+    update_order_status_from_operator,
 )
 from app.services.order_text import (
     OPERATOR_ORDERS_ACCESS_DENIED_TEXT,
     OPERATOR_ORDERS_EMPTY_TEXT,
+    OPERATOR_ORDERS_INVALID_TRANSITION_TEXT,
     OPERATOR_ORDERS_LOAD_ERROR_TEXT,
     format_operator_order_details_text,
     format_operator_orders_list_text,
@@ -178,7 +180,7 @@ async def change_operator_order_status(
             await callback.answer()
             return
 
-        update_result = await update_order_status_with_meta(
+        update_result = await update_order_status_from_operator(
             db, callback_data.order_id, callback_data.status
         )
         if callback.message is None:
@@ -204,6 +206,8 @@ async def change_operator_order_status(
                 format_order_status_notification_text(order),
             )
         await callback.answer()
+    except InvalidOrderStatusTransitionError:
+        await callback.answer(OPERATOR_ORDERS_INVALID_TRANSITION_TEXT, show_alert=True)
     except SQLAlchemyError:
         logger.exception(
             "Database error while updating operator order telegram_id=%s order_id=%s status=%s",

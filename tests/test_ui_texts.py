@@ -11,6 +11,7 @@ from app.keyboards.operator_orders import (
     build_operator_order_detail_keyboard,
     build_operator_orders_keyboard,
 )
+from app.keyboards.payment import build_payment_confirmation_keyboard, build_retry_payment_keyboard
 from app.services.admin_catalog_text import (
     format_admin_category_text,
     format_admin_product_text,
@@ -43,6 +44,7 @@ def test_load_ui_texts_returns_dict() -> None:
 def test_get_ui_text_reads_nested_value() -> None:
     assert get_ui_text("checkout", "confirm_button") == "Подтвердить заказ"
     assert get_ui_text("checkout", "main_menu_prompt") == "Выберите действие в главном меню."
+    assert get_ui_text("payment", "pay_button") == "Оплатить заказ"
 
 
 def test_format_ui_text_applies_placeholders() -> None:
@@ -132,6 +134,8 @@ def test_keyboards_preserve_existing_button_copy() -> None:
     product_keyboard = build_product_keyboard(product_id=1, category_id=2, parent_category_id=3)
     cart_keyboard = build_cart_keyboard([cart_item])
     checkout_keyboard = build_checkout_confirmation_keyboard()
+    payment_keyboard = build_payment_confirmation_keyboard("https://pay.example/1")
+    retry_keyboard = build_retry_payment_keyboard(order_id=7)
 
     assert [row[0].text for row in product_keyboard.inline_keyboard] == ["В корзину", "Назад"]
     assert [button.text for button in cart_keyboard.inline_keyboard[0]] == [
@@ -143,6 +147,8 @@ def test_keyboards_preserve_existing_button_copy() -> None:
     assert cart_keyboard.inline_keyboard[2][0].text == "Оформить заказ"
     assert checkout_keyboard.inline_keyboard[0][0].text == "Подтвердить заказ"
     assert checkout_keyboard.inline_keyboard[1][0].text == "Отменить"
+    assert payment_keyboard.inline_keyboard[0][0].text == "Оплатить заказ"
+    assert retry_keyboard.inline_keyboard[0][0].text == "Оплатить снова"
 
 
 def test_order_status_text_builder_maps_known_and_unknown_statuses() -> None:
@@ -161,6 +167,14 @@ def test_order_status_text_builder_maps_known_and_unknown_statuses() -> None:
             phone="+79991234567",
             shipping_address="Москва, Тверская 1",
             total_amount=Decimal("3998.00"),
+            payment_attempts=[
+                SimpleNamespace(
+                    status="succeeded",
+                    provider_payment_id="pay_100001",
+                    payment_method_type="bank_card",
+                    failure_reason=None,
+                )
+            ],
             user=SimpleNamespace(first_name="Анна"),
         )
     ]
@@ -189,7 +203,13 @@ def test_order_status_text_builder_maps_known_and_unknown_statuses() -> None:
         "Статус: Оплачен\n"
         "Телефон: +79991234567\n"
         "Адрес: Москва, Тверская 1\n"
-        "Сумма: 3998.00 ₽"
+        "Сумма: 3998.00 ₽\n\n"
+        "Оплата:\n"
+        "Попыток оплаты: 1\n"
+        "Статус оплаты: оплачен\n"
+        "Payment ID: pay_100001\n"
+        "Метод: bank_card\n"
+        "Причина ошибки: нет"
     )
     assert format_order_status_notification_text(operator_orders[0]) == (
         "Статус заказа ORD-100001 обновлен: Оплачен."

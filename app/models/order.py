@@ -40,3 +40,9 @@ class Order(Base):
         back_populates="order",
         cascade="all, delete-orphan",
     )
+    payment_attempts: Mapped[list[PaymentAttempt]] = relationship(
+        "PaymentAttempt",
+        back_populates="order",
+        cascade="all, delete-orphan",
+        order_by="desc(PaymentAttempt.created_at), desc(PaymentAttempt.id)",
+    )
