@@ -16,6 +16,8 @@ from app.ui_text import format_ui_text, get_ui_text
 
 BACK_BUTTON_TEXT = get_ui_text("catalog", "back_button")
 ADD_TO_CART_BUTTON_TEXT = get_ui_text("catalog", "add_to_cart_button")
+PREVIOUS_PAGE_BUTTON_TEXT = "⬅️"
+NEXT_PAGE_BUTTON_TEXT = "➡️"
 
 
 def build_root_categories_keyboard(categories: List[Category]) -> InlineKeyboardMarkup:
@@ -63,6 +65,9 @@ def build_products_keyboard(
     products: List[Product],
     category_id: int,
     parent_category_id: Optional[int],
+    page: int,
+    has_previous_page: bool,
+    has_next_page: bool,
 ) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for product in products:
@@ -78,6 +83,27 @@ def build_products_keyboard(
                 product_id=product.id,
                 category_id=category_id,
                 parent_category_id=parent_category_id,
+                page=page,
+            ),
+        )
+    if has_previous_page:
+        builder.button(
+            text=PREVIOUS_PAGE_BUTTON_TEXT,
+            callback_data=CatalogCallback(
+                action=OPEN_CATEGORY_ACTION,
+                category_id=category_id,
+                parent_category_id=parent_category_id,
+                page=page - 1,
+            ),
+        )
+    if has_next_page:
+        builder.button(
+            text=NEXT_PAGE_BUTTON_TEXT,
+            callback_data=CatalogCallback(
+                action=OPEN_CATEGORY_ACTION,
+                category_id=category_id,
+                parent_category_id=parent_category_id,
+                page=page + 1,
             ),
         )
     builder.button(
@@ -87,7 +113,10 @@ def build_products_keyboard(
             category_id=parent_category_id,
         ),
     )
-    builder.adjust(1)
+    if has_previous_page or has_next_page:
+        builder.adjust(*([1] * len(products)), 2, 1)
+    else:
+        builder.adjust(*([1] * len(products)), 1)
     return builder.as_markup()
 
 
@@ -95,6 +124,7 @@ def build_product_keyboard(
     product_id: int,
     category_id: int,
     parent_category_id: Optional[int],
+    page: int,
 ) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
@@ -112,6 +142,7 @@ def build_product_keyboard(
             action=GO_BACK_ACTION,
             category_id=category_id,
             parent_category_id=parent_category_id,
+            page=page,
         ),
     )
     builder.adjust(1)
