@@ -131,7 +131,12 @@ def test_keyboards_preserve_existing_button_copy() -> None:
     product = SimpleNamespace(id=1, name="Белая футболка", price=Decimal("1999.00"))
     cart_item = SimpleNamespace(id=5, product=product)
 
-    product_keyboard = build_product_keyboard(product_id=1, category_id=2, parent_category_id=3)
+    product_keyboard = build_product_keyboard(
+        product_id=1,
+        category_id=2,
+        parent_category_id=3,
+        page=0,
+    )
     cart_keyboard = build_cart_keyboard([cart_item])
     checkout_keyboard = build_checkout_confirmation_keyboard()
     payment_keyboard = build_payment_confirmation_keyboard("https://pay.example/1")
