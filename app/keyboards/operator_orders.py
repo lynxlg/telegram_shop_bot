@@ -8,7 +8,7 @@ from app.callbacks.operator_orders import (
     OperatorOrdersCallback,
 )
 from app.models.order import Order
-from app.services.order import CANONICAL_ORDER_STATUSES
+from app.services.order import get_operator_available_statuses
 from app.services.order_text import get_order_status_label
 from app.ui_text import get_ui_text
 
@@ -33,7 +33,7 @@ def build_operator_order_detail_keyboard(
     order_id: int, current_status: str
 ) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
-    for status in CANONICAL_ORDER_STATUSES:
+    for status in get_operator_available_statuses(current_status):
         label = get_order_status_label(status)
         if status == current_status:
             label = f"• {label}"
@@ -52,5 +52,5 @@ def build_operator_order_detail_keyboard(
             action=BACK_TO_LIST_ACTION,
         ),
     )
-    builder.adjust(2, 2, 2, 1)
+    builder.adjust(2, 2, 1)
     return builder.as_markup()

@@ -9,6 +9,7 @@ from app.models.cart_item import CartItem
 from app.models.category import Category
 from app.models.order import Order
 from app.models.order_item import OrderItem
+from app.models.payment_attempt import PaymentAttempt
 from app.models.product import Product
 from app.models.user import User
 
@@ -36,6 +37,7 @@ async def test_tables_created(test_engine) -> None:
     assert "cart_items" in tables
     assert "orders" in tables
     assert "order_items" in tables
+    assert "payment_attempts" in tables
 
 
 @pytest.mark.asyncio
@@ -213,3 +215,45 @@ async def test_order_persist_and_load_with_items(db_session) -> None:
     assert saved_order.order_number == "ORD-000777"
     assert saved_order.total_amount == Decimal("2999.00")
     assert saved_item.product_name == "Черное худи"
+
+
+@pytest.mark.asyncio
+async def test_payment_attempt_persist_and_load(db_session) -> None:
+    user = User(
+        telegram_id=555004,
+        username="payment_user",
+        first_name="Payment",
+        last_name="User",
+    )
+    db_session.add(user)
+    await db_session.flush()
+    order = Order(
+        user_id=user.id,
+        order_number="ORD-000778",
+        status="new",
+        phone="+79991234568",
+        shipping_address="Москва, Пушкина 11",
+        total_amount=Decimal("1999.00"),
+    )
+    db_session.add(order)
+    await db_session.flush()
+    attempt = PaymentAttempt(
+        order_id=order.id,
+        provider="yookassa",
+        provider_payment_id="pay_0001",
+        idempotence_key="idem_0001",
+        status="pending",
+        amount=Decimal("1999.00"),
+        currency="RUB",
+        confirmation_url="https://pay.example/1",
+    )
+    db_session.add(attempt)
+    await db_session.commit()
+
+    result = await db_session.execute(
+        select(PaymentAttempt).where(PaymentAttempt.provider_payment_id == "pay_0001")
+    )
+    saved_attempt = result.scalar_one()
+
+    assert saved_attempt.order_id == order.id
+    assert saved_attempt.status == "pending"

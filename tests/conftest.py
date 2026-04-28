@@ -23,12 +23,14 @@ from app.handlers.catalog import router as catalog_router
 from app.handlers.common.start import router as start_router
 from app.handlers.operator_orders import router as operator_orders_router
 from app.handlers.order_status import router as order_status_router
+from app.handlers.payment import router as payment_router
 from app.models.cart import Cart  # noqa: F401
 from app.models.cart_item import CartItem  # noqa: F401
 from app.models.category import Category  # noqa: F401
 from app.models.database import Base
 from app.models.order import Order  # noqa: F401
 from app.models.order_item import OrderItem  # noqa: F401
+from app.models.payment_attempt import PaymentAttempt  # noqa: F401
 from app.models.product import Product  # noqa: F401
 from app.models.product_attribute import ProductAttribute  # noqa: F401
 from app.models.user import User  # noqa: F401
@@ -194,7 +196,7 @@ async def db_session(
             await connection.execute(
                 text(
                     "TRUNCATE TABLE "
-                    "order_items, orders, cart_items, carts, product_attributes, products, categories, users "
+                    "payment_attempts, order_items, orders, cart_items, carts, product_attributes, products, categories, users "
                     "RESTART IDENTITY CASCADE"
                 )
             )
@@ -212,6 +214,7 @@ def dp() -> Dispatcher:
     dispatcher.include_router(catalog_router)
     dispatcher.include_router(cart_router)
     dispatcher.include_router(order_status_router)
+    dispatcher.include_router(payment_router)
     dispatcher.include_router(operator_orders_router)
     dispatcher.include_router(admin_catalog_router)
     return dispatcher

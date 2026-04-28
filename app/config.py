@@ -10,6 +10,12 @@ class Settings(BaseSettings):
         default="postgresql+asyncpg://postgres:postgres@localhost:5432/telegram_shop_bot",
         min_length=1,
     )
+    yookassa_shop_id: str | None = Field(default=None)
+    yookassa_secret_key: str | None = Field(default=None)
+    yookassa_return_url: str = Field(default="https://example.com/yookassa/return", min_length=1)
+    yookassa_webhook_host: str = Field(default="0.0.0.0", min_length=1)
+    yookassa_webhook_port: int = Field(default=8080, ge=1, le=65535)
+    yookassa_webhook_path: str = Field(default="/webhooks/yookassa", min_length=1)
 
     model_config = SettingsConfigDict(
         env_file=".env",

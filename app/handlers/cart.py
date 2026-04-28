@@ -25,6 +25,7 @@ from app.keyboards.cart import (
     build_checkout_phone_keyboard,
 )
 from app.keyboards.main_menu import get_main_menu_keyboard
+from app.keyboards.payment import build_payment_confirmation_keyboard
 from app.models.user import User
 from app.services.cart import (
     decrease_cart_item_quantity,
@@ -46,6 +47,12 @@ from app.services.order import (
     create_order_from_cart,
     normalize_phone,
 )
+from app.services.payment import (
+    PaymentConfigurationError,
+    PaymentProviderError,
+    create_payment_attempt_for_order,
+    is_yookassa_enabled,
+)
 from app.ui_text import get_ui_text
 
 logger = logging.getLogger(__name__)
@@ -62,6 +69,8 @@ CHECKOUT_CANCELLED_TEXT = get_ui_text("checkout", "cancelled")
 CART_BUTTON_TEXT = get_ui_text("main_menu", "cart_button")
 CHECKOUT_CANCELLED_CALLBACK_TEXT = get_ui_text("checkout", "cancelled_callback")
 CHECKOUT_MAIN_MENU_TEXT = get_ui_text("checkout", "main_menu_prompt")
+PAYMENT_LINK_TEXT = get_ui_text("payment", "checkout_prompt")
+PAYMENT_CREATE_ERROR_TEXT = get_ui_text("payment", "payment_create_error")
 
 
 class CheckoutStates(StatesGroup):
@@ -318,6 +327,23 @@ async def confirm_checkout(
                 format_order_created_text(order.order_number),
                 reply_markup=None,
             )
+            if is_yookassa_enabled():
+                try:
+                    payment_attempt = await create_payment_attempt_for_order(db, order.id)
+                    if payment_attempt.confirmation_url:
+                        await callback.message.answer(
+                            PAYMENT_LINK_TEXT,
+                            reply_markup=build_payment_confirmation_keyboard(
+                                payment_attempt.confirmation_url
+                            ),
+                        )
+                except (PaymentConfigurationError, PaymentProviderError, SQLAlchemyError):
+                    logger.exception(
+                        "Failed to create payment attempt telegram_id=%s order_id=%s",
+                        callback.from_user.id,
+                        order.id,
+                    )
+                    await callback.message.answer(PAYMENT_CREATE_ERROR_TEXT)
             await callback.message.answer(
                 CHECKOUT_MAIN_MENU_TEXT,
                 reply_markup=get_main_menu_keyboard(role),

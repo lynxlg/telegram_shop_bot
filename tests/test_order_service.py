@@ -14,15 +14,18 @@ from app.services.order import (
     EmptyCartError,
     InvalidAddressError,
     InvalidOrderStatusError,
+    InvalidOrderStatusTransitionError,
     InvalidPhoneError,
     OrderStatusUpdateResult,
     create_order_from_cart,
     get_active_orders_by_telegram_id,
     get_active_orders_for_operator,
+    get_operator_available_statuses,
     get_order_by_id,
     normalize_address,
     normalize_phone,
     update_order_status,
+    update_order_status_from_operator,
     update_order_status_with_meta,
 )
 
@@ -258,6 +261,32 @@ async def test_update_order_status_with_meta_skips_unchanged_status(db_session) 
     assert result.order.status == "paid"
     assert persisted_order is not None
     assert persisted_order.status == "paid"
+
+
+@pytest.mark.asyncio
+async def test_update_order_status_from_operator_rejects_paid_transition_from_new(
+    db_session,
+) -> None:
+    buyer = User(telegram_id=331018, username="buyer18", first_name="Buyer", last_name="Eighteen")
+    db_session.add(buyer)
+    await db_session.flush()
+    order = Order(
+        user_id=buyer.id,
+        order_number="ORD-100023",
+        status="new",
+        phone="+79990000018",
+        shipping_address="Тверь, Советская 3",
+        total_amount=Decimal("190.00"),
+    )
+    db_session.add(order)
+    await db_session.commit()
+
+    with pytest.raises(InvalidOrderStatusTransitionError):
+        await update_order_status_from_operator(db_session, order.id, "paid")
+
+
+def test_get_operator_available_statuses_excludes_paid_for_new_order() -> None:
+    assert get_operator_available_statuses("new") == ("new", "cancelled")
 
 
 @pytest.mark.asyncio
