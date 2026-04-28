@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.callbacks.cart import (
     CANCEL_CHECKOUT_ACTION,
+    CLEAR_ACTION,
     CONFIRM_ORDER_ACTION,
     DECREASE_ACTION,
     INCREASE_ACTION,
@@ -27,6 +28,7 @@ from app.keyboards.cart import (
 from app.keyboards.main_menu import get_main_menu_keyboard
 from app.models.user import User
 from app.services.cart import (
+    clear_cart,
     decrease_cart_item_quantity,
     get_cart_by_telegram_id,
     increase_cart_item_quantity,
@@ -437,6 +439,27 @@ async def remove_item(
         logger.exception(
             "Database error while removing cart_item_id=%s", callback_data.cart_item_id
         )
+        if callback.message is not None:
+            await callback.message.edit_text(CART_UPDATE_ERROR_TEXT)
+        await callback.answer()
+
+
+@router.callback_query(CartCallback.filter(F.action == CLEAR_ACTION))
+async def clear_items(
+    callback: CallbackQuery,
+    db: AsyncSession,
+) -> None:
+    try:
+        cleared = await clear_cart(db, callback.from_user.id)
+        if not cleared:
+            if callback.message is not None:
+                await callback.message.edit_text(EMPTY_CART_TEXT)
+            await callback.answer()
+            return
+
+        await _update_cart_view(callback, db, callback.from_user.id)
+    except SQLAlchemyError:
+        logger.exception("Database error while clearing cart telegram_id=%s", callback.from_user.id)
         if callback.message is not None:
             await callback.message.edit_text(CART_UPDATE_ERROR_TEXT)
         await callback.answer()
