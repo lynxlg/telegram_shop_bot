@@ -49,7 +49,7 @@ audience: humans_and_agents
 
 ## Aiogram Conventions
 
-- Роутеры объявляются модульно и подключаются в bootstrap-слое через `include_router`, как в [app/main.py](/home/lynx/telegram_shop_bot/app/main.py).
+- Роутеры объявляются модульно и подключаются в bootstrap-слое через `include_router`, как в [app/main.py](../../app/main.py).
 - Callback data и action constants считаются частью Telegram contract. При изменении action names, состава payload или keyboard navigation нужны сопутствующие tests.
 - Пользовательские тексты, которые используются в нескольких ветках одного сценария, лучше держать в именованных константах или text helper modules, а не дублировать строковые литералы по всему handler.
 

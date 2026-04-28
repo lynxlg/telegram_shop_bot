@@ -6,7 +6,6 @@ purpose: "Фиксирует источник истины для статуса
 derived_from:
   - ../domain/architecture.md
   - ../prd/PRD-001-order-lifecycle-and-operations.md
-  - ../features/FT-PAY-001/feature.md
 status: active
 decision_status: accepted
 audience: humans_and_agents
