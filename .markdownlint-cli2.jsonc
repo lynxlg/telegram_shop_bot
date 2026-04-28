@@ -1,0 +1,6 @@
+{
+  "ignores": [
+    "memory-bank/features/legacy/**/*.md",
+    "memory-bank/flows/templates/**/*.md"
+  ]
+}

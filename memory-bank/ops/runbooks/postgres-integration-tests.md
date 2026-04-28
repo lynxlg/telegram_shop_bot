@@ -42,15 +42,15 @@ sudo docker ps -a --format '{{.Names}}\t{{.Status}}\t{{.Ports}}'
 
 Ожидаемый контейнер: `telegram_shop_bot_postgres`, порт `0.0.0.0:55432->5432/tcp`.
 
-2. Проверить, какой DSN зашит в `tests/.env.test`:
+1. Проверить, какой DSN зашит в `tests/.env.test`:
 
 ```bash
 sed -n '1p' tests/.env.test
 ```
 
-3. Если integration tests skip-аются только внутри агентской среды, а контейнер живой, считать основной причиной sandbox/socket restriction, а не падение PostgreSQL.
+1. Если integration tests skip-аются только внутри агентской среды, а контейнер живой, считать основной причиной sandbox/socket restriction, а не падение PostgreSQL.
 
-4. Если failures появляются только при записи evidence, проверить, не были ли integration команды запущены параллельно. Для этого достаточно посмотреть последние логи на предмет:
+1. Если failures появляются только при записи evidence, проверить, не были ли integration команды запущены параллельно. Для этого достаточно посмотреть последние логи на предмет:
 
 - `deadlock detected`
 - `UndefinedTableError`
@@ -116,12 +116,12 @@ DATABASE_URL=postgresql+asyncpg://lynx:password@localhost:5432/shop_bot_test?con
 Ниже — последовательность, которая уже сработала в этом репозитории:
 
 1. `sudo docker ps -a --format '{{.Names}}\t{{.Status}}\t{{.Ports}}'`
-2. Подтвердить, что `telegram_shop_bot_postgres` жив и слушает `55432`
-3. Временно поменять `tests/.env.test` на `localhost:55432`
-4. Запустить integration pytest вне sandbox
-5. Если падают только отдельные product tests — чинить код
-6. Если падают teardown/DDL ошибки — перезапустить evidence-команды последовательно
-7. После успешных логов вернуть `tests/.env.test` на `5432`
+1. Подтвердить, что `telegram_shop_bot_postgres` жив и слушает `55432`
+1. Временно поменять `tests/.env.test` на `localhost:55432`
+1. Запустить integration pytest вне sandbox
+1. Если падают только отдельные product tests — чинить код
+1. Если падают teardown/DDL ошибки — перезапустить evidence-команды последовательно
+1. После успешных логов вернуть `tests/.env.test` на `5432`
 
 ## Expected Result
 
@@ -135,7 +135,7 @@ DATABASE_URL=postgresql+asyncpg://lynx:password@localhost:5432/shop_bot_test?con
 Если runbook использовался только для verify:
 
 1. Вернуть `tests/.env.test` на `localhost:5432`
-2. Остановить Docker PostgreSQL только если он был поднят специально:
+1. Остановить Docker PostgreSQL только если он был поднят специально:
 
 ```bash
 docker compose stop postgres
