@@ -29,7 +29,7 @@ from app.models.user import User
 async def test_open_catalog_shows_root_categories(db_session, message_factory) -> None:
     db_session.add_all([Category(name="Одежда"), Category(name="Техника")])
     await db_session.commit()
-    message = message_factory(text_value="Каталог")
+    message = message_factory(text_value="🛍 Каталог")
 
     await open_catalog(message, db_session)
 
@@ -44,7 +44,7 @@ async def test_open_catalog_shows_root_categories(db_session, message_factory) -
 
 @pytest.mark.asyncio
 async def test_open_catalog_handles_empty_catalog(db_session, message_factory) -> None:
-    message = message_factory(text_value="Каталог")
+    message = message_factory(text_value="🛍 Каталог")
 
     await open_catalog(message, db_session)
 
@@ -392,7 +392,7 @@ async def test_open_product_handles_missing_product(db_session, callback_factory
 
 @pytest.mark.asyncio
 async def test_open_catalog_handles_database_error(message_factory, monkeypatch) -> None:
-    message = message_factory(text_value="Каталог")
+    message = message_factory(text_value="🛍 Каталог")
 
     async def broken_get_root_categories(_session):
         raise SQLAlchemyError("boom")

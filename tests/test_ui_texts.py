@@ -37,7 +37,7 @@ def test_load_ui_texts_returns_dict() -> None:
     data = load_ui_texts()
 
     assert isinstance(data, dict)
-    assert data["main_menu"]["catalog_button"] == "Каталог"
+    assert data["main_menu"]["catalog_button"] == "🛍 Каталог"
     assert data["main_menu"]["order_status_button"] == "Статус заказа"
 
 
@@ -64,8 +64,8 @@ def test_main_menu_keyboard_uses_json_texts() -> None:
     operator_keyboard = get_main_menu_keyboard("operator")
     admin_keyboard = get_main_menu_keyboard("admin")
 
-    assert keyboard.keyboard[0][0].text == "Каталог"
-    assert keyboard.keyboard[0][1].text == "Корзина"
+    assert keyboard.keyboard[0][0].text == "🛍 Каталог"
+    assert keyboard.keyboard[0][1].text == "🛒 Корзина"
     assert keyboard.keyboard[1][0].text == "Статус заказа"
     assert len(keyboard.keyboard) == 2
     assert operator_keyboard.keyboard[2][0].text == "Заказы"
@@ -131,7 +131,12 @@ def test_keyboards_preserve_existing_button_copy() -> None:
     product = SimpleNamespace(id=1, name="Белая футболка", price=Decimal("1999.00"))
     cart_item = SimpleNamespace(id=5, product=product)
 
-    product_keyboard = build_product_keyboard(product_id=1, category_id=2, parent_category_id=3)
+    product_keyboard = build_product_keyboard(
+        product_id=1,
+        category_id=2,
+        parent_category_id=3,
+        page=0,
+    )
     cart_keyboard = build_cart_keyboard([cart_item])
     checkout_keyboard = build_checkout_confirmation_keyboard()
     payment_keyboard = build_payment_confirmation_keyboard("https://pay.example/1")

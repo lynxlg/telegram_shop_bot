@@ -56,7 +56,7 @@ async def _seed_cart(db_session) -> tuple[User, CartItem]:
 
 @pytest.mark.asyncio
 async def test_open_cart_shows_empty_cart(db_session, message_factory) -> None:
-    message = message_factory(text_value="Корзина")
+    message = message_factory(text_value="🛒 Корзина")
 
     await open_cart(message, db_session)
 
@@ -71,7 +71,7 @@ async def test_open_cart_shows_items(db_session, message_factory) -> None:
         username=user.username,
         first_name=user.first_name,
         last_name=user.last_name,
-        text_value="Корзина",
+        text_value="🛒 Корзина",
     )
 
     await open_cart(message, db_session)
@@ -156,7 +156,7 @@ async def test_cart_action_handles_missing_item(db_session, callback_factory) ->
 
 @pytest.mark.asyncio
 async def test_open_cart_handles_database_error(message_factory, monkeypatch) -> None:
-    message = message_factory(text_value="Корзина")
+    message = message_factory(text_value="🛒 Корзина")
 
     async def broken_get_cart(_session, _telegram_id):
         raise SQLAlchemyError("boom")
