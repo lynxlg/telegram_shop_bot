@@ -1,7 +1,7 @@
 ---
 title: PostgreSQL Integration Tests Via Docker
 doc_kind: ops
-doc_function: runbook
+doc_function: canonical
 purpose: "Runbook для прогонов integration tests против Docker PostgreSQL и диагностики типовых проблем с подключением, sandbox и teardown."
 derived_from:
   - ../development.md

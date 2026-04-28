@@ -33,10 +33,13 @@ canonical_for:
 
 ## Core Workflows
 
-- `WF-01` Регистрация и возврат в бот: пользователь отправляет `/start`, бот сохраняет или обновляет запись пользователя в таблице `users` и показывает главное меню.
+- `WF-01` Регистрация и возврат в бот: пользователь отправляет `/start`, бот сохраняет или обновляет запись пользователя в таблице `users` и показывает role-aware главное меню.
 - `WF-02` Навигация по каталогу: см. [`../use-cases/UC-001-browse-catalog-and-open-product.md`](../use-cases/UC-001-browse-catalog-and-open-product.md).
 - `WF-03` Работа с корзиной: см. [`../use-cases/UC-002-manage-cart.md`](../use-cases/UC-002-manage-cart.md).
-- `WF-04` Административное управление каталогом: см. [`../use-cases/UC-006-manage-catalog.md`](../use-cases/UC-006-manage-catalog.md).
+- `WF-04` Checkout и создание заказа: см. [`../use-cases/UC-003-checkout-and-create-order.md`](../use-cases/UC-003-checkout-and-create-order.md).
+- `WF-05` Покупатель проверяет активные заказы: см. [`../use-cases/UC-004-check-active-order-status.md`](../use-cases/UC-004-check-active-order-status.md).
+- `WF-06` Оператор или администратор меняет статус заказа: см. [`../use-cases/UC-005-manage-order-status.md`](../use-cases/UC-005-manage-order-status.md).
+- `WF-07` Администратор управляет каталогом: см. [`../use-cases/UC-006-manage-catalog.md`](../use-cases/UC-006-manage-catalog.md).
 
 ## Outcomes
 
@@ -45,6 +48,8 @@ canonical_for:
 | `MET-01` | Пользователь может самостоятельно собрать корзину в Telegram | Без каталога и корзины бот не решает shopping-задачу | Пользователь проходит путь `/start` → каталог → карточка товара → корзина без участия менеджера | Ручной сценарий и automated tests по handlers/services |
 | `MET-02` | Выбор товара не теряется между сессиями | In-memory состояние не подходит для покупательского сценария | Корзина хранится в PostgreSQL и открывается после повторного запуска бота | Интеграционные тесты БД и повторное чтение корзины по `telegram_id` |
 | `MET-03` | Каталог достаточно информативен для выбора товара | Текст без структуры и без изображения снижает ценность карточки | Пользователь видит название, цену, описание, характеристики и при наличии `image_url` изображение товара | Acceptance-сценарии каталога и карточки товара |
+| `MET-04` | Пользователь доводит shopping flow до заказа внутри Telegram | Каталог и корзина без checkout не закрывают транзакционный сценарий | Пользователь проходит путь `корзина -> телефон -> адрес -> подтверждение -> номер заказа` без ручной дообработки | Handler/integration tests по checkout и order persistence |
+| `MET-05` | Order lifecycle прозрачен внутри бота | Заказ без buyer/operator surfaces остаётся opaque | Покупатель видит активные заказы, а `operator`/`admin` управляют статусами и инициируют buyer notification | Handler/service tests по order tracking и operator workflow |
 
 ## Constraints
 
@@ -59,5 +64,9 @@ canonical_for:
 - [README.md](../../README.md) — зафиксированный текущий реализованный scope: каталог, карточка товара с `image_url`, корзина и базовые команды запуска.
 - [`../use-cases/UC-001-browse-catalog-and-open-product.md`](../use-cases/UC-001-browse-catalog-and-open-product.md) — канонический сценарий каталога и карточки товара.
 - [`../use-cases/UC-002-manage-cart.md`](../use-cases/UC-002-manage-cart.md) — канонический сценарий корзины и сохранения между сессиями.
+- [`../use-cases/UC-003-checkout-and-create-order.md`](../use-cases/UC-003-checkout-and-create-order.md) — канонический checkout flow с созданием заказа.
+- [`../use-cases/UC-004-check-active-order-status.md`](../use-cases/UC-004-check-active-order-status.md) — buyer-facing просмотр активных заказов.
+- [`../use-cases/UC-005-manage-order-status.md`](../use-cases/UC-005-manage-order-status.md) — operator/admin workflow смены статуса заказа.
+- [`../use-cases/UC-006-manage-catalog.md`](../use-cases/UC-006-manage-catalog.md) — административное управление категориями и товарами.
 - [features/README.md](../features/README.md) — текущее состояние canonical feature packages и ссылка на legacy-архив ранних материалов по каталогу, изображениям и корзине.
 - Product-initiative слой уже вынесен в [`../prd/PRD-001-order-lifecycle-and-operations.md`](../prd/PRD-001-order-lifecycle-and-operations.md); отдельных customer research документов для этого репозитория пока нет.

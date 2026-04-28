@@ -35,5 +35,6 @@ audience: humans_and_agents
 - [`FT-NTF-001/`](FT-NTF-001/) — автоматические уведомления покупателю после смены статуса заказа оператором или администратором.
 - [`FT-OPS-001/`](FT-OPS-001/) — операторский workflow просмотра активных заказов и смены их статусов в Telegram.
 - [`FT-ADM-001/`](FT-ADM-001/) — административное управление категориями и товарами каталога внутри Telegram.
+- [`FT-PAY-001/`](FT-PAY-001/) — онлайн-оплата оформленного заказа через ЮKassa API с payment attempts, retry flow и operator-visible payment facts.
 - Исторические материалы ранних задач вынесены в [`legacy/README.md`](legacy/README.md) и не участвуют в authoritative feature governance.
 - Их устойчивые продуктовые контракты уже мигрированы в `domain/*` и `use-cases/*`; `legacy/` сохраняет только архивный след происхождения.

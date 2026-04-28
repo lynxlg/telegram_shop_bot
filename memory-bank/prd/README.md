@@ -16,7 +16,7 @@ audience: humans_and_agents
 
 ## Current PRDs
 
-- [`PRD-001-order-lifecycle-and-operations.md`](PRD-001-order-lifecycle-and-operations.md) — инициатива по расширению продукта от текущего baseline `каталог + корзина` к оформлению заказа, оплате, статусам и базовым административным операциям в Telegram.
+- [`PRD-001-order-lifecycle-and-operations.md`](PRD-001-order-lifecycle-and-operations.md) — phased-инициатива по order lifecycle и operational возможностям: delivered scope уже включает checkout, статусы заказов, operator workflow и admin catalog, а remaining backlog покрывает payment, массовые коммуникации, статистику и внешние интеграции.
 
 PRD нужен, когда задача живет на уровне продуктовой инициативы или capability, а не одного vertical slice. Обычно PRD стоит между общим контекстом из [`../domain/problem.md`](../domain/problem.md) и downstream feature packages из [`../features/README.md`](../features/README.md).
 

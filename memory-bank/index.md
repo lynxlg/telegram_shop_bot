@@ -18,7 +18,7 @@ audience: humans_and_agents
 
 ## Кратко о проекте
 
-`telegram_shop_bot` — Telegram-бот интернет-магазина. Текущий product baseline покрывает `/start`, навигацию по иерархическому каталогу, карточку товара с изображением по `image_url` и корзину, которая сохраняется между сессиями в PostgreSQL.
+`telegram_shop_bot` — Telegram-бот интернет-магазина. Текущий product baseline покрывает `/start` с role-aware главным меню, навигацию по иерархическому каталогу, карточку товара с изображением по `image_url`, корзину в PostgreSQL, checkout с созданием заказа, buyer-facing просмотр активных заказов, operator workflow смены статусов, buyer notifications и admin CRUD каталога.
 
 ## Стек
 
@@ -30,7 +30,7 @@ audience: humans_and_agents
 
 ## Архитектура
 
-Проект организован по слоям `handlers` → `services` → `models`, с отдельными пакетами `keyboards`/`callbacks` для Telegram UI и `config` для загрузки runtime-настроек. `handlers` принимают Telegram updates и вызывают use case-логику, `services` работают с `AsyncSession` и бизнес-операциями каталога и корзины, `models` владеют SQLAlchemy-моделями и lifecycle БД.
+Проект организован по слоям `handlers` → `services` → `models`, с отдельными пакетами `keyboards`/`callbacks` для Telegram UI, `ui_text.py` + `ui_texts.json` для централизованного copy и `config` для загрузки runtime-настроек. `handlers` принимают Telegram updates и вызывают use case-логику, `services` работают с `AsyncSession` и бизнес-операциями каталога, корзины и заказов, `models` владеют SQLAlchemy-моделями и lifecycle БД.
 
 ## Аннотированный индекс
 
