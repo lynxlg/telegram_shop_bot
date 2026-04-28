@@ -102,6 +102,80 @@ async def test_open_category_shows_products_for_leaf_category(db_session, callba
 
 
 @pytest.mark.asyncio
+async def test_open_category_paginates_leaf_products(db_session, callback_factory) -> None:
+    category = Category(name="Футболки")
+    db_session.add(category)
+    await db_session.flush()
+    for index in range(1, 8):
+        db_session.add(
+            Product(
+                category_id=category.id,
+                name=f"Товар {index}",
+                price=Decimal("1999.00"),
+                is_active=True,
+            )
+        )
+    await db_session.commit()
+    callback = callback_factory()
+    callback_data = CatalogCallback(action=OPEN_CATEGORY_ACTION, category_id=category.id)
+
+    await open_category(callback, callback_data, db_session)
+
+    callback.message.edit_text.assert_awaited_once()
+    text = callback.message.edit_text.await_args.args[0]
+    assert "Товар 1 - 1999.00 ₽" in text
+    assert "Товар 5 - 1999.00 ₽" in text
+    assert "Товар 6 - 1999.00 ₽" not in text
+    reply_markup = callback.message.edit_text.await_args.kwargs["reply_markup"]
+    assert [button.text for row in reply_markup.inline_keyboard for button in row] == [
+        "Товар 1 - 1999.00 ₽",
+        "Товар 2 - 1999.00 ₽",
+        "Товар 3 - 1999.00 ₽",
+        "Товар 4 - 1999.00 ₽",
+        "Товар 5 - 1999.00 ₽",
+        "➡️",
+        "Назад",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_open_category_opens_requested_products_page(db_session, callback_factory) -> None:
+    category = Category(name="Футболки")
+    db_session.add(category)
+    await db_session.flush()
+    for index in range(1, 8):
+        db_session.add(
+            Product(
+                category_id=category.id,
+                name=f"Товар {index}",
+                price=Decimal("1999.00"),
+                is_active=True,
+            )
+        )
+    await db_session.commit()
+    callback = callback_factory()
+    callback_data = CatalogCallback(
+        action=OPEN_CATEGORY_ACTION,
+        category_id=category.id,
+        page=1,
+    )
+
+    await open_category(callback, callback_data, db_session)
+
+    text = callback.message.edit_text.await_args.args[0]
+    assert "Товар 6 - 1999.00 ₽" in text
+    assert "Товар 7 - 1999.00 ₽" in text
+    assert "Товар 5 - 1999.00 ₽" not in text
+    reply_markup = callback.message.edit_text.await_args.kwargs["reply_markup"]
+    assert [button.text for row in reply_markup.inline_keyboard for button in row] == [
+        "Товар 6 - 1999.00 ₽",
+        "Товар 7 - 1999.00 ₽",
+        "⬅️",
+        "Назад",
+    ]
+
+
+@pytest.mark.asyncio
 async def test_open_category_handles_leaf_without_products(db_session, callback_factory) -> None:
     category = Category(name="Футболки")
     db_session.add(category)
@@ -268,6 +342,32 @@ async def test_go_back_returns_to_parent_category_level_from_media_message(
     callback.message.delete.assert_awaited_once()
     assert "Выберите раздел:" in callback.message.answer.await_args.args[0]
     assert "Футболки" in callback.message.answer.await_args.args[0]
+
+
+@pytest.mark.asyncio
+async def test_go_back_returns_to_same_products_page(db_session, callback_factory) -> None:
+    category = Category(name="Футболки")
+    db_session.add(category)
+    await db_session.flush()
+    for index in range(1, 8):
+        db_session.add(
+            Product(
+                category_id=category.id,
+                name=f"Товар {index}",
+                price=Decimal("1999.00"),
+                is_active=True,
+            )
+        )
+    await db_session.commit()
+    callback = callback_factory()
+    callback_data = CatalogCallback(action=GO_BACK_ACTION, category_id=category.id, page=1)
+
+    await go_back(callback, callback_data, db_session)
+
+    text = callback.message.edit_text.await_args.args[0]
+    assert "Товар 6 - 1999.00 ₽" in text
+    assert "Товар 7 - 1999.00 ₽" in text
+    assert "Товар 5 - 1999.00 ₽" not in text
 
 
 @pytest.mark.asyncio

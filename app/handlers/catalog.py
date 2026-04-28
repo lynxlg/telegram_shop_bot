@@ -51,6 +51,7 @@ EMPTY_CATEGORY_PRODUCTS_TEXT = get_ui_text("catalog", "empty_category_products")
 CART_UPDATE_ERROR_TEXT = get_ui_text("cart", "update_error")
 CATALOG_BUTTON_TEXT = get_ui_text("main_menu", "catalog_button")
 ADD_TO_CART_SUCCESS_TEXT = get_ui_text("catalog", "add_to_cart_success")
+PRODUCTS_PER_PAGE = 5
 
 
 async def _delete_message_safely(message) -> None:
@@ -94,6 +95,7 @@ async def _render_category_view(
     category: Category,
     message,
     db: AsyncSession,
+    page: int = 0,
 ) -> None:
     child_categories = await get_child_categories(db, category.id)
     if child_categories:
@@ -121,13 +123,23 @@ async def _render_category_view(
         )
         return
 
+    total_products = len(products)
+    last_page = max((total_products - 1) // PRODUCTS_PER_PAGE, 0)
+    current_page = min(max(page, 0), last_page)
+    start = current_page * PRODUCTS_PER_PAGE
+    end = start + PRODUCTS_PER_PAGE
+    page_products = products[start:end]
+
     await _show_text_response(
         message,
-        build_products_text(category, products),
+        build_products_text(category, page_products),
         reply_markup=build_products_keyboard(
-            products=products,
+            products=page_products,
             category_id=category.id,
             parent_category_id=category.parent_id,
+            page=current_page,
+            has_previous_page=current_page > 0,
+            has_next_page=end < total_products,
         ),
     )
 
@@ -136,6 +148,7 @@ async def _render_root_or_category(
     message,
     db: AsyncSession,
     category_id: Optional[int],
+    page: int = 0,
 ) -> None:
     if category_id is None:
         categories = await get_root_categories(db)
@@ -155,7 +168,7 @@ async def _render_root_or_category(
         await _show_text_response(message, CATEGORY_NOT_FOUND_TEXT)
         return
 
-    await _render_category_view(category, message, db)
+    await _render_category_view(category, message, db, page=page)
 
 
 async def _ensure_user_exists(callback: CallbackQuery, db: AsyncSession) -> None:
@@ -212,7 +225,12 @@ async def open_category(
             await callback.answer()
             return
 
-        await _render_category_view(category, callback.message, db)
+        await _render_category_view(
+            category,
+            callback.message,
+            db,
+            page=callback_data.page or 0,
+        )
         await callback.answer()
     except SQLAlchemyError:
         logger.exception(
@@ -246,6 +264,7 @@ async def open_product(
             product_id=product.id,
             category_id=product.category_id,
             parent_category_id=callback_data.parent_category_id,
+            page=callback_data.page or 0,
         )
 
         if product.image_url:
@@ -338,7 +357,12 @@ async def go_back(
         return
 
     try:
-        await _render_root_or_category(callback.message, db, callback_data.category_id)
+        await _render_root_or_category(
+            callback.message,
+            db,
+            callback_data.category_id,
+            page=callback_data.page or 0,
+        )
         await callback.answer()
     except SQLAlchemyError:
         logger.exception(

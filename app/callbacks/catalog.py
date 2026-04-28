@@ -8,6 +8,7 @@ class CatalogCallback(CallbackData, prefix="catalog"):
     category_id: Optional[int] = None
     product_id: Optional[int] = None
     parent_category_id: Optional[int] = None
+    page: Optional[int] = None
 
 
 OPEN_CATEGORY_ACTION = "open_category"
